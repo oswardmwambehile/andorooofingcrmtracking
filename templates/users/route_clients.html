@@ -1,0 +1,235 @@
+{% extends "users/base.html" %}
+{% load static %}
+
+{% block title %}Route Clients{% endblock %}
+{% block content %}
+{% include "users/sidebar.html" %}
+<main class="main-content position-relative max-height-vh-100 h-100 mt-1 border-radius-lg">
+  {% include "users/nav.html" %}
+  <div class="container-fluid py-4">
+    <div class="row"><div class="col-12">
+      <div class="card mb-4">
+        <!-- Header -->
+        <div class="card-header d-flex justify-content-between align-items-center pb-0">
+          <h6 class="mb-2 mb-md-0">Route Client List</h6>
+          <a href="#" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addRouteModal">
+            <i class="fas fa-plus me-1"></i> Add Route
+          </a>
+        </div>
+        <!-- Search -->
+        <div class="card-header pb-0">
+          <input type="text" id="searchInput" class="form-control form-control-sm"
+                 placeholder="Search..." style="max-width: 200px;">
+        </div>
+        <!-- Table -->
+        <div class="card-body px-0 pt-0 pb-2">
+          <div class="table-responsive p-2">
+            <table class="table align-items-center mb-0" id="routeTable">
+              <thead>
+                <tr>
+                  <th>Production Line</th><th>Client Name</th><th>Contact</th>
+                  <th>Purpose</th><th>Priority</th><th>Next Step</th>
+                  <th>Added By</th><th>Created At</th><th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for route in route_clients %}
+                <tr data-visible="true"
+                    data-id="{{ route.id }}"
+                    data-production-line-id="{{ route.production_line.id }}"
+                    data-client-name="{{ route.client_name }}"
+                    data-contact="{{ route.contact }}"
+                    data-purpose="{{ route.purpose }}"
+                    data-priority="{{ route.priority }}"
+                    data-next-step="{{ route.next_step }}">
+                  <td>{{ route.production_line.name }}</td>
+                  <td>{{ route.client_name }}</td>
+                  <td>{{ route.contact }}</td>
+                  <td>{{ route.get_purpose_display }}</td>
+                  <td>{{ route.get_priority_display }}</td>
+                  <td>{{ route.next_step|truncatewords:10 }}</td>
+                  <td>{{ route.added_by.get_full_name|default:route.added_by.username }}</td>
+                  <td>{{ route.created_at|date:"Y-m-d H:i" }}</td>
+                  <td>
+                    <a href="{% url 'view_route_client' route.id %}" class="text-info me-2" title="View">
+                    <i class="fas fa-eye"></i>
+                    </a>
+                    <a href="#" class="text-warning me-2 edit-btn" title="Edit"
+                       data-bs-toggle="modal" data-bs-target="#editRouteModal">
+                      <i class="fas fa-edit"></i>
+                    </a>
+                    <form method="POST" action="{% url 'delete_route_client' route.id %}" style="display:inline;">
+                      {% csrf_token %}
+                      <button type="submit" onclick="return confirm('Delete this route?');"
+                              class="btn btn-link text-danger p-0"><i class="fas fa-trash-alt"></i></button>
+                    </form>
+                  </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="9" class="text-center text-muted py-3">No route clients found.</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+            <div id="noResults" class="text-center text-muted py-3" style="display:none;">
+              No matching records found.
+            </div>
+          </div>
+          <div class="d-flex justify-content-end mt-3 me-3">
+            <nav><ul class="pagination pagination-sm mb-0" id="pagination"></ul></nav>
+          </div>
+        </div>
+      </div>
+    </div></div>
+  </div>
+
+  <!-- Add Modal -->
+  <div class="modal fade" id="addRouteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog"><div class="modal-content">
+      <form method="POST" action="{% url 'route_clients' %}">
+        {% csrf_token %}
+        <div class="modal-header"><h5 class="modal-title">Add Route Client</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label">Production Line</label>
+            <select name="production_line" class="form-control" required>
+              <option value="" disabled selected>Select Line</option>
+              {% for line in production_lines %}<option value="{{ line.id }}">{{ line.name }}</option>{% endfor %}
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Client Name</label>
+            <input type="text" name="client_name" class="form-control" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Contact</label>
+            <input type="text" name="contact" class="form-control" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Purpose</label>
+            <select name="purpose" class="form-control" required>
+              <option value="" disabled selected>Select Purpose</option>
+              {% for code,label in PURPOSE_CHOICES %}<option value="{{ code }}">{{ label }}</option>{% endfor %}
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Priority</label>
+            <select name="priority" class="form-control" required>
+              <option value="" disabled selected>Select Priority</option>
+              {% for code,label in PRIORITY_CHOICES %}<option value="{{ code }}">{{ label }}</option>{% endfor %}
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Next Step</label>
+            <textarea name="next_step" class="form-control" rows="3" required></textarea>
+          </div>
+        </div>
+        <div class="modal-footer"><button type="submit" class="btn btn-primary">Save</button><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button></div>
+      </form>
+    </div></div>
+  </div>
+
+  <!-- Edit Modal -->
+  <div class="modal fade" id="editRouteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog"><div class="modal-content">
+      <form method="POST" id="editRouteForm">{% csrf_token %}
+        <input type="hidden" id="editRouteId">
+        <div class="modal-header"><h5 class="modal-title">Edit Route Client</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label">Production Line</label>
+            <select name="production_line" id="editProductionLine" class="form-control" required>
+              <option value="" disabled>Select Line</option>
+              {% for line in production_lines %}<option value="{{ line.id }}">{{ line.name }}</option>{% endfor %}
+            </select>
+          </div>
+          <div class="mb-3"><label class="form-label">Client Name</label><input type="text" name="client_name" id="editClientName" class="form-control" required></div>
+          <div class="mb-3"><label class="form-label">Contact</label><input type="text" name="contact" id="editContact" class="form-control" required></div>
+          <div class="mb-3"><label class="form-label">Purpose</label>
+            <select name="purpose" id="editPurpose" class="form-control" required>
+              <option value="" disabled>Select Purpose</option>
+              {% for code,label in PURPOSE_CHOICES %}<option value="{{ code }}">{{ label }}</option>{% endfor %}
+            </select>
+          </div>
+          <div class="mb-3"><label class="form-label">Priority</label>
+            <select name="priority" id="editPriority" class="form-control" required>
+              <option value="" disabled>Select Priority</option>
+              {% for code,label in PRIORITY_CHOICES %}<option value="{{ code }}">{{ label }}</option>{% endfor %}
+            </select>
+          </div>
+          <div class="mb-3"><label class="form-label">Next Step</label><textarea name="next_step" id="editNextStep" class="form-control" rows="3" required></textarea></div>
+        </div>
+        <div class="modal-footer"><button type="submit" class="btn btn-primary">Update</button><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button></div>
+      </form>
+    </div></div>
+  </div>
+
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet"/>
+
+<script>
+  document.querySelectorAll('.edit-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const row = btn.closest('tr');
+      const id = row.dataset.id;
+      document.getElementById('editRouteId').value = id;
+      document.getElementById('editClientName').value = row.dataset.clientName;
+      document.getElementById('editContact').value = row.dataset.contact;
+      document.getElementById('editPurpose').value = row.dataset.purpose;
+      document.getElementById('editPriority').value = row.dataset.priority;
+      document.getElementById('editNextStep').value = row.dataset.nextStep;
+      document.getElementById('editProductionLine').value = row.dataset.productionLineId;
+      document.getElementById('editRouteForm').action = `/routes/edit/${id}/`;
+    });
+  });
+
+  const searchInput = document.getElementById('searchInput');
+  const rows = Array.from(document.querySelectorAll('#routeTable tbody tr[data-id]'));
+  const pagination = document.getElementById('pagination');
+  const noResults = document.getElementById('noResults');
+  const rowsPerPage = 14;
+
+  function filterRows() {
+    const kw = searchInput.value.toLowerCase().trim();
+    rows.forEach(r => { r.dataset.visible = r.textContent.toLowerCase().includes(kw) ? 'true' : 'false'; });
+  }
+
+  function getVisibleRows() { return rows.filter(r => r.dataset.visible === 'true'); }
+
+  function displayPage(page) {
+    filterRows();
+    const visible = getVisibleRows();
+    const start = (page-1)*rowsPerPage;
+    rows.forEach(r => r.style.display='none');
+    if(visible.length) {
+      visible.forEach((r,i)=>{ if(i>=start && i<start+rowsPerPage) r.style.display=''; });
+      noResults.style.display='none';
+      pagination.style.display = visible.length > rowsPerPage ? 'flex' : 'none';
+    } else {
+      noResults.style.display='block';
+      pagination.style.display='none';
+    }
+    updatePagination(visible.length, page);
+  }
+
+  function updatePagination(total, page) {
+    const pages = Math.ceil(total/rowsPerPage);
+    pagination.innerHTML='';
+    for(let i=1;i<=pages;i++){
+      const li=document.createElement('li');
+      li.className=`page-item ${i===page?'active':''}`;
+      li.innerHTML=`<a href="#" class="page-link">${i}</a>`;
+      li.addEventListener('click',e=>{ e.preventDefault(); displayPage(i); });
+      pagination.appendChild(li);
+    }
+  }
+
+  searchInput.addEventListener('input',()=>displayPage(1));
+  displayPage(1);
+</script>
+{% endblock %}

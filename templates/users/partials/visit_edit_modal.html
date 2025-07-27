@@ -1,0 +1,29 @@
+<div class="modal fade" id="editVisitModal" tabindex="-1" aria-labelledby="editVisitModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form method="POST" id="editVisitForm">
+        {% csrf_token %}
+        <div class="modal-header">
+          <h5 class="modal-title" id="editVisitModalLabel">Edit Visits Achieved</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <!-- Hidden input if you want to keep visit_id in form data (optional) -->
+          <input type="hidden" name="visit_id" id="editVisitId">
+          <div class="mb-3">
+            <label for="editNewVisits" class="form-label">New Visits</label>
+            <input type="number" class="form-control" id="editNewVisits" name="new" required>
+          </div>
+          <div class="mb-3">
+            <label for="editOldVisits" class="form-label">Old Visits</label>
+            <input type="number" class="form-control" id="editOldVisits" name="old" required>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-primary">Update</button>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

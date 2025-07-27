@@ -1,0 +1,273 @@
+{% extends "users/base.html" %}
+{% load static %}
+
+{% block title %}New Leads{% endblock %}
+
+{% block content %}
+{% include "users/sidebar.html" %}
+<main class="main-content position-relative max-height-vh-100 h-100 mt-1 border-radius-lg">
+  {% include "users/nav.html" %}
+  <div class="container-fluid py-4">
+    <div class="row"><div class="col-12">
+      <div class="card mb-4">
+        <!-- Header -->
+        <div class="card-header d-flex justify-content-between align-items-center pb-0">
+          <h6 class="mb-2 mb-md-0">New Leads</h6>
+          <a href="#" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addLeadModal">
+            <i class="fas fa-plus me-1"></i> Add Lead
+          </a>
+        </div>
+        <!-- Search -->
+        <div class="card-header pb-0">
+          <input type="text" id="searchInput" class="form-control form-control-sm"
+                 placeholder="Search..." style="max-width: 200px;">
+        </div>
+        <!-- Table -->
+        <div class="card-body px-0 pt-0 pb-2">
+          <div class="table-responsive p-2">
+            <table class="table align-items-center mb-0" id="leadTable">
+              <thead>
+                <tr>
+                  <th>Production Line</th>
+                  <th>Client Name</th>
+                  <th>Contact</th>
+                  <th>Designation</th>
+                  <th>Location</th>
+                  <th>Added By</th>
+                  <th>Created At</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for lead in leads %}
+                <tr data-visible="true" data-id="{{ lead.id }}"
+                    data-production-line-id="{{ lead.production_line.id }}"
+                    data-client-name="{{ lead.client_name }}"
+                    data-contact="{{ lead.contact }}"
+                    data-designation="{{ lead.designation }}"
+                    data-location="{{ lead.location }}">
+                  <td>{{ lead.production_line.name }}</td>
+                  <td>{{ lead.client_name }}</td>
+                  <td>{{ lead.contact }}</td>
+                  <td>{{ lead.designation }}</td>
+                  <td>{{ lead.location }}</td>
+                  <td>
+                    {% if lead.added_by %}
+                      {{ lead.added_by.get_full_name|default:lead.added_by.username }}
+                    {% else %}
+                      &mdash;
+                    {% endif %}
+                  </td>
+                  <td>{{ lead.created_at|date:"Y‑m‑d H:i" }}</td>
+                  <td>
+                    <a href="{% url 'view_lead' lead.id %}" class="text-info me-2" title="View">
+                        <i class="fas fa-eye"></i>
+                        </a>
+                    <a href="#" class="text-warning me-2 edit-btn"
+                       title="Edit" data-bs-toggle="modal" data-bs-target="#editLeadModal">
+                      <i class="fas fa-edit"></i>
+                    </a>
+                    <form method="POST" action="{% url 'delete_lead' lead.id %}" style="display:inline;">
+                      {% csrf_token %}
+                      <button type="submit" onclick="return confirm('Delete this lead?');"
+                              class="btn btn-link text-danger p-0">
+                        <i class="fas fa-trash-alt"></i>
+                      </button>
+                    </form>
+                  </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="8" class="text-center text-muted py-3">No leads found.</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+            <div id="noResults" class="text-center text-muted py-3" style="display:none;">
+              No matching records found.
+            </div>
+          </div>
+          <!-- Pagination -->
+          <div class="d-flex justify-content-end mt-3 me-3">
+            <nav><ul class="pagination pagination-sm mb-0" id="pagination"></ul></nav>
+          </div>
+        </div>
+      </div>
+    </div></div>
+  </div>
+  
+  <!-- Add Lead Modal -->
+  <div class="modal fade" id="addLeadModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog"><div class="modal-content">
+      <form method="POST" action="{% url 'add_lead' %}">
+        {% csrf_token %}
+        <div class="modal-header"><h5 class="modal-title">Add Lead</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label">Production Line</label>
+            <select name="production_line" class="form-control" required>
+              <option value="">Select Line</option>
+              {% for line in production_lines %}
+                <option value="{{ line.id }}">{{ line.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="mb-3"><label class="form-label">Client Name</label>
+            <input type="text" name="client_name" class="form-control" required></div>
+          <div class="mb-3"><label class="form-label">Contact</label>
+            <input type="text" name="contact" class="form-control" required></div>
+          <div class="mb-3"><label class="form-label">Designation</label>
+            <select name="designation" class="form-control" required>
+              <option value="">Select</option>
+              <option value="Owner">Owner</option>
+              <option value="Engineer">Engineer</option>
+              <option value="Contractor">Contractor</option>
+            </select>
+          </div>
+          <div class="mb-3"><label class="form-label">Location</label>
+            <input type="text" name="location" class="form-control" required></div>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-primary">Save</button>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        </div>
+      </form>
+    </div></div>
+  </div>
+  
+  <!-- Edit Lead Modal -->
+  <div class="modal fade" id="editLeadModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog"><div class="modal-content">
+      <form method="POST" id="editLeadForm">
+        {% csrf_token %}
+        <input type="hidden" id="editLeadId">
+        <div class="modal-header"><h5 class="modal-title">Edit Lead</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label">Production Line</label>
+            <select name="production_line" id="editProductionLine" class="form-control" required>
+              {% for line in production_lines %}
+                <option value="{{ line.id }}">{{ line.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="mb-3"><label class="form-label">Client Name</label>
+            <input type="text" name="client_name" id="editClientName" class="form-control" required></div>
+          <div class="mb-3"><label class="form-label">Contact</label>
+            <input type="text" name="contact" id="editContact" class="form-control" required></div>
+          <div class="mb-3"><label class="form-label">Designation</label>
+            <select name="designation" id="editDesignation" class="form-control" required>
+              <option value="">Select</option>
+              <option value="Owner">Owner</option>
+              <option value="Engineer">Engineer</option>
+              <option value="Contractor">Contractor</option>
+            </select>
+          </div>
+          <div class="mb-3"><label class="form-label">Location</label>
+            <input type="text" name="location" id="editLocation" class="form-control" required></div>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-primary">Update</button>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        </div>
+      </form>
+    </div></div>
+  </div>
+
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+
+<script>
+  // Populate edit modal
+  document.querySelectorAll('.edit-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const row = btn.closest('tr');
+      document.getElementById('editLeadId').value = row.dataset.id;
+      document.getElementById('editClientName').value = row.dataset.clientName;
+      document.getElementById('editContact').value = row.dataset.contact;
+      document.getElementById('editDesignation').value = row.dataset.designation;
+      document.getElementById('editLocation').value = row.dataset.location;
+      document.getElementById('editProductionLine').value = row.dataset.productionLineId;
+      document.getElementById('editLeadForm').action = `/leads/edit/${row.dataset.id}/`;
+    });
+  });
+
+  // Search and Pagination
+  const searchInput = document.getElementById('searchInput');
+  const rows = Array.from(document.querySelectorAll('#leadTable tbody tr[data-id]'));
+  const pagination = document.getElementById('pagination');
+  const noResults = document.getElementById('noResults');
+  const rowsPerPage = 14;
+  let currentPage = 1;
+
+  function filterRows() {
+    const kw = searchInput.value.toLowerCase().trim();
+    rows.forEach(row => {
+      const matches = row.textContent.toLowerCase().includes(kw);
+      row.dataset.visible = matches ? 'true' : 'false';
+    });
+  }
+
+  function getVisibleRows() {
+    return rows.filter(row => row.dataset.visible === 'true');
+  }
+
+  function displayPage(page) {
+    filterRows();
+
+    const visibleRows = getVisibleRows();
+    const start = (page - 1) * rowsPerPage;
+
+    // Hide all rows first
+    rows.forEach(row => {
+      row.style.display = 'none';
+    });
+
+    // Show matching rows for the current page
+    if (visibleRows.length > 0) {
+      visibleRows.forEach((row, index) => {
+        if (index >= start && index < start + rowsPerPage) {
+          row.style.display = '';
+        }
+      });
+      noResults.style.display = 'none';
+      pagination.style.display = visibleRows.length > rowsPerPage ? 'flex' : 'none';
+    } else {
+      noResults.style.display = 'block';
+      pagination.style.display = 'none';
+    }
+
+    updatePagination(visibleRows.length, page);
+  }
+
+  function updatePagination(totalRows, currentPage) {
+    const totalPages = Math.ceil(totalRows / rowsPerPage);
+    pagination.innerHTML = '';
+
+    for (let i = 1; i <= totalPages; i++) {
+      const li = document.createElement('li');
+      li.className = `page-item ${i === currentPage ? 'active' : ''}`;
+      li.innerHTML = `<a href="#" class="page-link">${i}</a>`;
+      li.addEventListener('click', function (e) {
+        e.preventDefault();
+        displayPage(i);
+      });
+      pagination.appendChild(li);
+    }
+  }
+
+  // Run on search
+  searchInput.addEventListener('input', () => {
+    currentPage = 1;
+    displayPage(currentPage);
+  });
+
+  // Initial load
+  displayPage(currentPage);
+</script>
+
+{% endblock %}

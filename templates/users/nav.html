@@ -1,0 +1,51 @@
+{% load static %}
+<nav class="navbar navbar-main navbar-expand-lg px-0 mx-4 shadow-none border-radius-xl bg-white" id="navbarBlur" navbar-scroll="true">
+  <div class="container-fluid py-1 px-3">
+
+    <!-- Breadcrumb + Title -->
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb bg-transparent mb-0 pb-0 pt-1 px-0 me-sm-6 me-5"></ol>
+      <h6 class="font-weight-bolder mb-0">
+        {% block page_title %}Dashboard{% endblock %}
+      </h6>
+    </nav>
+
+    <!-- Mobile Navbar Toggle Button -->
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar"
+            aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <!-- Navbar Content -->
+    <div class="collapse navbar-collapse mt-sm-0 mt-2 me-md-0 me-sm-4" id="navbar">
+      <div class="ms-md-auto pe-md-3 d-flex align-items-center"></div>
+
+      <ul class="navbar-nav justify-content-end align-items-center">
+
+        <!-- ✅ Just Profile Picture + Username -->
+        <li class="nav-item d-flex align-items-center" style="gap: 8px;">
+          {% if request.user.profile_picture %}
+            <img src="{{ request.user.profile_picture.url }}" alt="Avatar" class="avatar avatar-sm rounded-circle" />
+          {% else %}
+            <img src="{% static 'users/img/default-avatar.png' %}" alt="Avatar" class="avatar avatar-sm rounded-circle" />
+          {% endif %}
+          <span class="d-none d-sm-inline font-weight-bold text-body">
+            {{ request.user.username|default:request.user.email }}
+          </span>
+        </li>
+
+        <!-- Sidebar toggle for mobile (optional) -->
+        <li class="nav-item d-xl-none ps-3 d-flex align-items-center">
+          <a href="javascript:;" class="nav-link text-body p-0" id="iconNavbarSidenav">
+            <div class="sidenav-toggler-inner">
+              <i class="sidenav-toggler-line"></i>
+              <i class="sidenav-toggler-line"></i>
+              <i class="sidenav-toggler-line"></i>
+            </div>
+          </a>
+        </li>
+
+      </ul>
+    </div>
+  </div>
+</nav>

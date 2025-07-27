@@ -1,0 +1,50 @@
+{% extends "users/base.html" %}
+{% load static %}
+
+{% block title %}View Visit Achieved{% endblock %}
+
+{% block content %}
+{% include "users/sidebar.html" %}
+<main class="main-content position-relative max-height-vh-100 h-100 mt-1 border-radius-lg">
+  {% include "users/nav.html" %}
+
+  <div class="container-fluid py-4">
+    <div class="row justify-content-center">
+      <div class="col-md-8">
+        <div class="card mb-4">
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <h6 class="mb-0">Visit Details</h6>
+            <a href="{% url 'visits_achieved_list' %}" class="btn btn-secondary btn-sm">
+              <i class="fas fa-arrow-left me-1"></i> Back
+            </a>
+          </div>
+          <div class="card-body">
+            <dl class="row">
+              <dt class="col-sm-4">New Visits</dt>
+              <dd class="col-sm-8">{{ visit.new }}</dd>
+
+              <dt class="col-sm-4">Old Visits</dt>
+              <dd class="col-sm-8">{{ visit.old }}</dd>
+
+              <dt class="col-sm-4">Added By</dt>
+              <dd class="col-sm-8">
+                {% if visit.added_by %}
+                  {{ visit.added_by.get_full_name|default:visit.added_by.username }}
+                {% else %}
+                  &mdash;
+                {% endif %}
+              </dd>
+
+              <dt class="col-sm-4">Created At</dt>
+              <dd class="col-sm-8">{{ visit.created_at|date:"Y-m-d H:i" }}</dd>
+
+              <dt class="col-sm-4">Last Updated</dt>
+              <dd class="col-sm-8">{{ visit.updated_at|date:"Y-m-d H:i" }}</dd>
+            </dl>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+{% endblock %}

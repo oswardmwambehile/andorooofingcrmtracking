@@ -1,0 +1,25 @@
+{% extends "users/base.html" %}
+{% load static %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+
+  {% include "users/sidebar.html" %}
+  <main class="main-content position-relative max-height-vh-100 h-100 mt-1 border-radius-lg ">
+    <!-- Navbar -->
+    {% include "users/nav.html" %}
+    <!-- End Navbar -->
+    <div class="container-fluid py-4">
+      
+       {% include "users/cards.html" %}
+
+         {% include "users/charts.html" %}
+      
+    </div>
+  </main>
+  
+
+
+    
+    {% endblock %}

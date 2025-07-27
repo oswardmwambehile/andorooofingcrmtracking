@@ -1,0 +1,283 @@
+{% extends "users/base.html" %}
+{% load static %}
+
+{% block title %}Order Quotations{% endblock %}
+
+{% block content %}
+{% include "users/sidebar.html" %}
+
+<main class="main-content position-relative max-height-vh-100 h-100 mt-1 border-radius-lg">
+  {% include "users/nav.html" %}
+
+  <div class="container-fluid py-4">
+    <div class="row">
+      <div class="col-12">
+        <div class="card mb-4">
+          <!-- Header -->
+          <div class="card-header pb-0 d-flex justify-content-between align-items-center">
+            <h6 class="mb-2 mb-md-0">Order Quotations</h6>
+            <a href="#" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addQuotationModal">
+              <i class="fas fa-plus me-1"></i> Add Quotation
+            </a>
+          </div>
+
+          <!-- Search -->
+          <div class="card-header pb-0">
+            <input type="text" id="searchInput" class="form-control form-control-sm" placeholder="Search..." style="max-width: 180px;">
+          </div>
+
+          <!-- Table -->
+          <div class="card-body px-0 pt-0 pb-2">
+            <div class="table-responsive p-2">
+              <table class="table align-items-center mb-0" id="quotationTable">
+                <thead>
+                  <tr>
+                    <th class="text-center"><input type="checkbox"></th>
+                    <th>Production Line</th>
+                    <th>Client Name</th>
+                    <th>Contact</th>
+                    <th>Quotation</th>
+                    <th>Created By</th>
+                    <th>Created At</th>
+                    <th>Updated At</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for quote in quotations %}
+                  <tr>
+                    <td class="text-center"><input type="checkbox"></td>
+                    <td>{{ quote.production_line.name }}</td>
+                    <td>{{ quote.client_name }}</td>
+                    <td>{{ quote.contact }}</td>
+                    <td>{{ quote.quotation }}</td>
+                    <td>
+                      {% if quote.created_by %}
+                        {{ quote.created_by.get_full_name|default:quote.created_by.username }}
+                      {% else %}
+                        &mdash;
+                      {% endif %}
+                    </td>
+                    <td>{{ quote.created_at|date:"Y-m-d H:i" }}</td>
+                    <td>{{ quote.updated_at|date:"Y-m-d H:i" }}</td>
+                    <td class="text-center">
+                     <a href="{% url 'view_quotation' quote.id %}" class="text-info me-2" title="View">
+                        <i class="fas fa-eye"></i>
+                        </a>
+                      <a href="#" class="text-warning me-2 edit-btn"
+                         data-id="{{ quote.id }}"
+                         data-client-name="{{ quote.client_name }}"
+                         data-contact="{{ quote.contact }}"
+                         data-quotation="{{ quote.quotation }}"
+                         data-production-line-id="{{ quote.production_line.id }}"
+                         data-bs-toggle="modal"
+                         data-bs-target="#editQuotationModal">
+                        <i class="fas fa-edit"></i>
+                      </a>
+
+                      <form method="POST" action="{% url 'delete_quotation' quote.id %}" style="display: inline;">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-link text-danger p-0"
+                                onclick="return confirm('Are you sure you want to delete this quotation?');">
+                          <i class="fas fa-trash-alt"></i>
+                        </button>
+                      </form>
+                    </td>
+                  </tr>
+                  {% empty %}
+                  <tr><td colspan="8" class="text-center text-muted py-3">No quotations found.</td></tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+
+              <div id="noResults" class="text-center text-muted py-3" style="display: none;">
+                No matching records found.
+              </div>
+            </div>
+
+            <div class="d-flex justify-content-end mt-3 me-3">
+              <nav>
+                <ul class="pagination pagination-sm mb-0" id="pagination"></ul>
+              </nav>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Quotation Modal -->
+  <div class="modal fade" id="addQuotationModal" tabindex="-1" aria-labelledby="addQuotationModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <form method="POST" action="{% url 'add_quotation' %}">
+          {% csrf_token %}
+          <div class="modal-header">
+            <h5 class="modal-title" id="addQuotationModalLabel">Add Order Quotation</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div class="mb-3">
+              <label for="productionLine" class="form-label">Production Line</label>
+              <select name="production_line" id="productionLine" class="form-control" required>
+                <option value="">Select Line</option>
+                {% for line in production_lines %}
+                <option value="{{ line.id }}">{{ line.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="mb-3">
+              <label for="clientName" class="form-label">Client Name</label>
+              <input type="text" class="form-control" name="client_name" id="clientName" required>
+            </div>
+            <div class="mb-3">
+              <label for="contact" class="form-label">Contact</label>
+              <input type="text" class="form-control" name="contact" id="contact" required>
+            </div>
+            <div class="mb-3">
+              <label for="quotation" class="form-label">Quotation</label>
+              <input type="number" class="form-control" step="0.01" name="quotation" id="quotation" required>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="submit" class="btn btn-primary">Save</button>
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Quotation Modal -->
+  <div class="modal fade" id="editQuotationModal" tabindex="-1" aria-labelledby="editQuotationModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <form method="POST" id="editQuotationForm">
+          {% csrf_token %}
+          <div class="modal-header">
+            <h5 class="modal-title" id="editQuotationModalLabel">Edit Quotation</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <input type="hidden" id="editQuotationId">
+            <div class="mb-3">
+              <label for="editProductionLine" class="form-label">Production Line</label>
+              <select name="production_line" id="editProductionLine" class="form-control" required>
+                {% for line in production_lines %}
+                  <option value="{{ line.id }}">{{ line.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="mb-3">
+              <label for="editClientName" class="form-label">Client Name</label>
+              <input type="text" class="form-control" name="client_name" id="editClientName" required>
+            </div>
+            <div class="mb-3">
+              <label for="editContact" class="form-label">Contact</label>
+              <input type="text" class="form-control" name="contact" id="editContact" required>
+            </div>
+            <div class="mb-3">
+              <label for="editQuotation" class="form-label">Quotation</label>
+              <input type="number" step="0.01" class="form-control" name="quotation" id="editQuotation" required>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="submit" class="btn btn-primary">Update</button>
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<!-- Bootstrap JS (required for modals) -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
+
+<!-- FontAwesome for Icons -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" crossorigin="anonymous" />
+
+<!-- JavaScript for Populating Edit Modal -->
+<script>
+  document.querySelectorAll(".edit-btn").forEach(button => {
+    button.addEventListener("click", function () {
+      const id = this.dataset.id;
+      const form = document.getElementById("editQuotationForm");
+
+      document.getElementById("editQuotationId").value = id;
+      document.getElementById("editClientName").value = this.dataset.clientName;
+      document.getElementById("editContact").value = this.dataset.contact;
+      document.getElementById("editQuotation").value = this.dataset.quotation;
+      document.getElementById("editProductionLine").value = this.dataset.productionLineId;
+
+      form.action = `/quotations/edit/${id}/`;
+    });
+  });
+</script>
+
+<!-- JavaScript: Table Search & Pagination -->
+<script>
+  const searchInput = document.getElementById("searchInput");
+  const table = document.getElementById("quotationTable");
+  const tbody = table.querySelector("tbody");
+  const pagination = document.getElementById("pagination");
+  const noResults = document.getElementById("noResults");
+  const allRows = Array.from(tbody.querySelectorAll("tr"));
+  const rowsPerPage = 5;
+  let currentPage = 1;
+
+  function getVisibleRows() {
+    return allRows.filter(row => row.dataset.visible !== "false");
+  }
+
+  function filterRows() {
+    const keyword = searchInput.value.toLowerCase();
+    allRows.forEach(row => {
+      const match = row.textContent.toLowerCase().includes(keyword);
+      row.style.display = match ? "" : "none";
+      row.dataset.visible = match ? "true" : "false";
+    });
+  }
+
+  function displayPage(page) {
+    filterRows();
+    const visibleRows = getVisibleRows();
+    const start = (page - 1) * rowsPerPage;
+    const end = start + rowsPerPage;
+
+    visibleRows.forEach((row, index) => {
+      row.style.display = (index >= start && index < end) ? "" : "none";
+    });
+
+    noResults.style.display = visibleRows.length === 0 ? "block" : "none";
+    pagination.style.display = visibleRows.length === 0 ? "none" : "flex";
+
+    updatePagination(visibleRows.length, page);
+  }
+
+  function updatePagination(total, page) {
+    const pageCount = Math.ceil(total / rowsPerPage);
+    pagination.innerHTML = "";
+
+    for (let i = 1; i <= pageCount; i++) {
+      const li = document.createElement("li");
+      li.className = `page-item ${i === page ? "active" : ""}`;
+      li.innerHTML = `<a href="#" class="page-link">${i}</a>`;
+      li.addEventListener("click", (e) => {
+        e.preventDefault();
+        currentPage = i;
+        displayPage(currentPage);
+      });
+      pagination.appendChild(li);
+    }
+  }
+
+  searchInput.addEventListener("input", () => {
+    currentPage = 1;
+    displayPage(currentPage);
+  });
+
+  displayPage(currentPage);
+</script>
+{% endblock %}

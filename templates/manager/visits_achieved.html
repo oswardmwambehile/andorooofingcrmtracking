@@ -1,0 +1,187 @@
+{% extends "manager/base.html" %}
+{% load static %}
+
+{% block content %}
+  {% include "manager/sidebar.html" %}
+  <div class="main-panel">
+    <div class="main-header">
+      <div class="main-header-logo">
+        <div class="logo-header" data-background-color="dark">
+          <a href="index.html" class="logo">
+            <img
+              src="{% static 'assets/img/kaiadmin/logo_light.svg' %}"
+              alt="navbar brand"
+              class="navbar-brand"
+              height="20"
+            />
+          </a>
+          <div class="nav-toggle">
+            <button class="btn btn-toggle toggle-sidebar"><i class="gg-menu-right"></i></button>
+            <button class="btn btn-toggle sidenav-toggler"><i class="gg-menu-left"></i></button>
+          </div>
+          <button class="topbar-toggler more"><i class="gg-more-vertical-alt"></i></button>
+        </div>
+      </div>
+      {% include "manager/nav.html" %}
+    </div>
+
+    <div class="container">
+      <div class="page-inner">
+        <div class="d-flex align-items-left align-items-md-center flex-column flex-md-row pt-2 pb-4">
+          <div>
+           
+          </div>
+          <div class="ms-md-auto py-2 py-md-0">
+            
+            <a href="#" class="btn btn-primary btn-round">Generate Report</a>
+          </div>
+        </div>
+
+        <!-- Search Input for Table -->
+        <div class="row mb-4">
+          <div class="col-md-12">
+            <input type="text" id="search-input" class="form-control" placeholder="Search records..." />
+          </div>
+        </div>
+
+        <!-- Table Data -->
+        <div class="col-md-12">
+          <div class="card">
+            <div class="card-header">
+              <h4 class="card-title">Visits Achieved</h4>
+            </div>
+            <div class="card-body">
+              <div class="table-responsive">
+                <table id="multi-filter-select" class="display table table-striped table-hover">
+                  <thead class="table-dark">
+                    <tr>
+                      <th>New</th>
+                      <th>Old</th>
+                      <th>Added By</th>
+                      <th>Created At</th>
+                      <th>Updated At</th>
+                      <th>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for visit in visits %}
+                      <tr>
+                        <td>{{ visit.new }}</td>
+                        <td>{{ visit.old }}</td>
+                        <td>
+                          {% if visit.added_by %}
+                            {{ visit.added_by.get_full_name|default:visit.added_by.username }}
+                          {% else %}
+                            -
+                          {% endif %}
+                        </td>
+                        <td>{{ visit.created_at|date:"Y-m-d H:i" }}</td>
+                        <td>{{ visit.updated_at|date:"Y-m-d H:i" }}</td>
+                        <td>
+                          <!-- Button to view detailed visit -->
+                          <a href="{% url 'manager_view_visit_achieved' visit.id %}" class="btn btn-primary btn-sm">View</a>
+                        </td>
+                      </tr>
+                    {% empty %}
+                      <tr>
+                        <td colspan="6" class="text-center">No data available.</td>
+                      </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+
+              <!-- No Results Found Message -->
+              <div id="no-results" style="display: none;" class="alert alert-warning text-center">
+                No results found for the search term.
+              </div>
+
+              <!-- Pagination (server-side pagination handled already in the view) -->
+              {% if is_paginated %}
+              <nav aria-label="Page navigation">
+                <ul class="pagination justify-content-center mt-3">
+                  {% if visits.has_previous %}
+                    <li class="page-item">
+                      <a class="page-link" href="?page=1&q={{ request.GET.q }}">&laquo;</a>
+                    </li>
+                    <li class="page-item">
+                      <a class="page-link" href="?page={{ visits.previous_page_number }}&q={{ request.GET.q }}">&lsaquo;</a>
+                    </li>
+                  {% else %}
+                    <li class="page-item disabled"><span class="page-link">&laquo;</span></li>
+                    <li class="page-item disabled"><span class="page-link">&lsaquo;</span></li>
+                  {% endif %}
+
+                  {% for i in visits.paginator.page_range %}
+                    {% if i == visits.number %}
+                      <li class="page-item active"><span class="page-link">{{ i }}</span></li>
+                    {% elif i > visits.number|add:'-3' and i < visits.number|add:'3' %}
+                      <li class="page-item"><a class="page-link" href="?page={{ i }}&q={{ request.GET.q }}">{{ i }}</a></li>
+                    {% endif %}
+                  {% endfor %}
+
+                  {% if visits.has_next %}
+                    <li class="page-item">
+                      <a class="page-link" href="?page={{ visits.next_page_number }}&q={{ request.GET.q }}">&rsaquo;</a>
+                    </li>
+                    <li class="page-item">
+                      <a class="page-link" href="?page={{ visits.paginator.num_pages }}&q={{ request.GET.q }}">&raquo;</a>
+                    </li>
+                  {% else %}
+                    <li class="page-item disabled"><span class="page-link">&rsaquo;</span></li>
+                    <li class="page-item disabled"><span class="page-link">&raquo;</span></li>
+                  {% endif %}
+                </ul>
+              </nav>
+              {% endif %}
+              <!-- End Pagination -->
+
+            </div>
+          </div>
+        </div>
+
+        <!-- JavaScript for Client-side Search -->
+        <script>
+          // Wait until the DOM is fully loaded
+          document.addEventListener('DOMContentLoaded', function() {
+            const searchInput = document.getElementById('search-input');
+            const table = document.getElementById('multi-filter-select');
+            const rows = table.querySelectorAll('tbody tr');
+            const noResultsMessage = document.getElementById('no-results');
+            
+            searchInput.addEventListener('input', function() {
+              const searchValue = searchInput.value.toLowerCase();
+              let hasResults = false;
+
+              rows.forEach(function(row) {
+                let cells = row.querySelectorAll('td');
+                let match = false;
+
+                cells.forEach(function(cell) {
+                  if (cell.textContent.toLowerCase().includes(searchValue)) {
+                    match = true;
+                  }
+                });
+
+                if (match) {
+                  row.style.display = '';  // Show the row
+                  hasResults = true;
+                } else {
+                  row.style.display = 'none';  // Hide the row
+                }
+              });
+
+              // Show/hide the 'No results found' message
+              if (hasResults) {
+                noResultsMessage.style.display = 'none';
+              } else {
+                noResultsMessage.style.display = 'block';
+              }
+            });
+          });
+        </script>
+        
+      </div>
+    </div>
+  </div>
+{% endblock %}

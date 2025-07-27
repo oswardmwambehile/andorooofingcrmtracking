@@ -1,0 +1,62 @@
+{% extends "manager/base.html" %}
+{% load static %}
+
+{% block content %}
+  {% include "manager/sidebar.html" %}
+
+  <div class="main-panel">
+    <div class="main-header">
+      {% include "manager/nav.html" %}
+    </div>
+
+    <div class="container">
+      <div class="page-inner">
+        <h3>Route Client Details</h3>
+
+        <div class="card">
+          <div class="card-body">
+            <table class="table table-bordered">
+              <tr>
+                <th>Client / Company Name</th>
+                <td>{{ route.client_name }}</td>
+              </tr>
+              <tr>
+                <th>Production Line</th>
+                <td>{{ route.production_line.name }}</td>
+              </tr>
+              <tr>
+                <th>Contact</th>
+                <td>{{ route.contact }}</td>
+              </tr>
+              <tr>
+                <th>Purpose</th>
+                <td>{{ route.get_purpose_display }}</td>
+              </tr>
+              <tr>
+                <th>Priority</th>
+                <td>{{ route.get_priority_display }}</td>
+              </tr>
+              <tr>
+                <th>Next Step</th>
+                <td>{{ route.next_step }}</td>
+              </tr>
+              <tr>
+                <th>Added By</th>
+                <td>{{ route.added_by.get_full_name|default:route.added_by.username }}</td>
+              </tr>
+              <tr>
+                <th>Created At</th>
+                <td>{{ route.created_at|date:"Y-m-d H:i" }}</td>
+              </tr>
+              <tr>
+                <th>Updated At</th>
+                <td>{{ route.updated_at|date:"Y-m-d H:i" }}</td>
+              </tr>
+            </table>
+            <a href="{% url 'manager_view_route_clients' %}" class="btn btn-secondary">Back to List</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}

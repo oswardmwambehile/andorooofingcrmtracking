@@ -1,0 +1,65 @@
+{% extends "manager/base.html" %}
+{% load static %}
+
+{% block content %}
+  {% include "manager/sidebar.html" %}
+  
+  <div class="main-panel">
+    <div class="main-header">
+      <div class="main-header-logo">
+        <div class="logo-header" data-background-color="dark">
+          <a href="index.html" class="logo">
+            <img
+              src="{% static 'assets/img/kaiadmin/logo_light.svg' %}"
+              alt="navbar brand"
+              class="navbar-brand"
+              height="20"
+            />
+          </a>
+        </div>
+      </div>
+      {% include "manager/nav.html" %}
+    </div>
+
+    <div class="container">
+      <div class="page-inner">
+        <h3>Lead Details</h3>
+        <table class="table table-bordered">
+          <tr>
+            <th>Client Name</th>
+            <td>{{ lead.client_name }}</td>
+          </tr>
+          <tr>
+            <th>Production Line</th>
+            <td>{{ lead.production_line.name }}</td>
+          </tr>
+          <tr>
+            <th>Contact</th>
+            <td>{{ lead.contact }}</td>
+          </tr>
+          <tr>
+            <th>Designation</th>
+            <td>{{ lead.designation }}</td>
+          </tr>
+          <tr>
+            <th>Location</th>
+            <td>{{ lead.location }}</td>
+          </tr>
+          <tr>
+            <th>Added By</th>
+            <td>{{ lead.added_by.get_full_name|default:lead.added_by.username }}</td>
+          </tr>
+          <tr>
+            <th>Created At</th>
+            <td>{{ lead.created_at|date:"Y-m-d H:i" }}</td>
+          </tr>
+          <tr>
+            <th>Updated At</th>
+            <td>{{ lead.updated_at|date:"Y-m-d H:i" }}</td>
+          </tr>
+        </table>
+        <a href="{% url 'manager_view_leads' %}" class="btn btn-secondary">Back to List</a>
+      </div>
+    </div>
+  </div>
+{% endblock %}

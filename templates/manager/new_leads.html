@@ -1,0 +1,147 @@
+{% extends "manager/base.html" %}
+{% load static %}
+
+{% block content %}
+  {% include "manager/sidebar.html" %}
+
+  <div class="main-panel">
+    <div class="main-header">
+      <div class="main-header-logo">
+        <div class="logo-header" data-background-color="dark">
+          <a href="index.html" class="logo">
+            <img src="{% static 'assets/img/kaiadmin/logo_light.svg' %}" alt="navbar brand" class="navbar-brand" height="20"/>
+          </a>
+        </div>
+      </div>
+      {% include "manager/nav.html" %}
+    </div>
+
+    <div class="container">
+      <div class="page-inner">
+        <div class="d-flex align-items-left align-items-md-center flex-column flex-md-row pt-2 pb-4">
+          <div></div>
+          <div class="ms-md-auto py-2 py-md-0">
+            <a href="#" class="btn btn-primary btn-round">Export Leads</a>
+          </div>
+        </div>
+
+        <!-- Search Input -->
+        <div class="row mb-4">
+          <div class="col-md-12">
+            <input type="text" id="search-input" class="form-control" placeholder="Search leads..." value="{{ search_query }}" />
+          </div>
+        </div>
+
+        <!-- Leads Table -->
+        <div class="col-md-12">
+          <div class="card">
+            <div class="card-header">
+              <h4 class="card-title">New Leads</h4>
+            </div>
+            <div class="card-body">
+              <div class="table-responsive" style="overflow-x: auto;">
+                <table class="table table-striped table-hover" style="min-width: 1200px;">
+                  <thead class="table-dark">
+                    <tr>
+                      <th style="white-space: nowrap;">Production Line</th>
+                      <th style="white-space: nowrap;">Client Name</th>
+                      <th style="white-space: nowrap;">Contact</th>
+                      <th style="white-space: nowrap;">Designation</th>
+                      <th style="white-space: nowrap;">Location</th>
+                      <th style="white-space: nowrap;">Added By</th>
+                      <th style="white-space: nowrap;">Created At</th>
+                      <th style="white-space: nowrap;">Updated At</th>
+                      <th style="white-space: nowrap;">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for lead in leads %}
+                      <tr>
+                        <td style="white-space: nowrap;">{{ lead.production_line.name }}</td>
+                        <td style="white-space: nowrap;">{{ lead.client_name }}</td>
+                        <td style="white-space: nowrap;">{{ lead.contact }}</td>
+                        <td style="white-space: nowrap;">{{ lead.designation }}</td>
+                        <td style="white-space: nowrap;">{{ lead.location }}</td>
+                        <td style="white-space: nowrap;">{{ lead.added_by.get_full_name|default:lead.added_by.username }}</td>
+                        <td style="white-space: nowrap;">{{ lead.created_at|date:"Y-m-d H:i" }}</td>
+                        <td style="white-space: nowrap;">{{ lead.updated_at|date:"Y-m-d H:i" }}</td>
+                        <td style="white-space: nowrap;">
+                          <a href="{% url 'manager_view_lead_detail' lead.id %}" class="btn btn-primary btn-sm">View</a>
+                        </td>
+                      </tr>
+                    {% empty %}
+                      <tr>
+                        <td colspan="9" class="text-center">No leads found.</td>
+                      </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+
+              <!-- No Results -->
+              <div id="no-results" style="display: none;" class="alert alert-warning text-center">
+                No results found for the search term.
+              </div>
+
+              <!-- Pagination -->
+              {% if is_paginated %}
+              <nav aria-label="Page navigation">
+                <ul class="pagination justify-content-center mt-3">
+                  {% if leads.has_previous %}
+                    <li class="page-item"><a class="page-link" href="?page=1&q={{ request.GET.q }}">&laquo;</a></li>
+                    <li class="page-item"><a class="page-link" href="?page={{ leads.previous_page_number }}&q={{ request.GET.q }}">&lsaquo;</a></li>
+                  {% else %}
+                    <li class="page-item disabled"><span class="page-link">&laquo;</span></li>
+                    <li class="page-item disabled"><span class="page-link">&lsaquo;</span></li>
+                  {% endif %}
+
+                  {% for i in leads.paginator.page_range %}
+                    {% if i == leads.number %}
+                      <li class="page-item active"><span class="page-link">{{ i }}</span></li>
+                    {% elif i > leads.number|add:'-3' and i < leads.number|add:'3' %}
+                      <li class="page-item"><a class="page-link" href="?page={{ i }}&q={{ request.GET.q }}">{{ i }}</a></li>
+                    {% endif %}
+                  {% endfor %}
+
+                  {% if leads.has_next %}
+                    <li class="page-item"><a class="page-link" href="?page={{ leads.next_page_number }}&q={{ request.GET.q }}">&rsaquo;</a></li>
+                    <li class="page-item"><a class="page-link" href="?page={{ leads.paginator.num_pages }}&q={{ request.GET.q }}">&raquo;</a></li>
+                  {% else %}
+                    <li class="page-item disabled"><span class="page-link">&rsaquo;</span></li>
+                    <li class="page-item disabled"><span class="page-link">&raquo;</span></li>
+                  {% endif %}
+                </ul>
+              </nav>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+
+        <!-- JavaScript for Search -->
+        <script>
+          document.addEventListener('DOMContentLoaded', function () {
+            const searchInput = document.getElementById('search-input');
+            const table = document.querySelector('table');
+            const rows = table.querySelectorAll('tbody tr');
+            const noResults = document.getElementById('no-results');
+
+            searchInput.addEventListener('input', function () {
+              const value = searchInput.value.toLowerCase();
+              let visible = false;
+
+              rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                const match = text.includes(value);
+                row.style.display = match ? '' : 'none';
+                if (match) visible = true;
+              });
+
+              noResults.style.display = visible ? 'none' : 'block';
+            });
+          });
+        </script>
+
+      </div>
+    </div>
+  </div>
+{% endblock %}

@@ -1,0 +1,158 @@
+{% extends "users/base.html" %}
+{% load static %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+{% include "users/sidebar.html" %}
+<main class="main-content position-relative max-height-vh-100 h-100 mt-1 border-radius-lg">
+  {% include "users/nav.html" %}
+
+  <div class="container-fluid py-4">
+    <div class="row">
+      <div class="col-12">
+        <div class="card mb-4">
+          <!-- Header -->
+          <div class="card-header pb-0">
+            <div class="d-flex flex-wrap justify-content-between align-items-center">
+              <h6 class="mb-2 mb-md-0">Our Clients</h6>
+              <div class="d-flex align-items-center">
+                <input type="text" id="searchInput" class="form-control form-control-sm me-2"
+                  placeholder="Search..." style="max-width: 180px; height: 32px;">
+                
+              </div>
+            </div>
+          </div>
+
+          <!-- Table -->
+          <div class="card-body px-0 pt-0 pb-2">
+            <div class="table-responsive p-2">
+              <table class="table align-items-center mb-0" id="clientTable">
+                <thead>
+                  <tr>
+                    <th class="text-center"><input type="checkbox"></th>
+                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Name</th>
+                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Function</th>
+                    <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Status</th>
+                    <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Employed</th>
+                    <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for client in clients %}
+                  <tr>
+                    <td class="text-center"><input type="checkbox"></td>
+                    <td><h6 class="mb-0 text-sm">{{ client.name }}</h6></td>
+                    <td><p class="text-xs font-weight-bold mb-0">{{ client.function }}</p></td>
+                    <td class="align-middle text-center text-sm">
+                      <span class="badge badge-sm {{ client.status_class }}">{{ client.status }}</span>
+                    </td>
+                    <td class="align-middle text-center">
+                      <span class="text-secondary text-xs font-weight-bold">{{ client.employed }}</span>
+                    </td>
+                    <td class="align-middle text-center">
+                      <a href="#" class="text-primary font-weight-bold text-xs">
+                        <i class="fas fa-eye me-1"></i> View
+                      </a>
+                    </td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+
+              <!-- No results message -->
+              <div id="noResults" class="text-center text-muted py-3" style="display: none;">
+                No matching records found.
+              </div>
+            </div>
+
+            <!-- Pagination -->
+            <div class="d-flex justify-content-end mt-3 me-3">
+              <nav>
+                <ul class="pagination pagination-sm mb-0" id="pagination"></ul>
+              </nav>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- FontAwesome for Icons -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" crossorigin="anonymous" />
+
+<!-- JavaScript for Search and Pagination -->
+<script>
+  const searchInput = document.getElementById("searchInput");
+  const table = document.getElementById("clientTable");
+  const tbody = table.querySelector("tbody");
+  const pagination = document.getElementById("pagination");
+  const noResults = document.getElementById("noResults");
+  const allRows = Array.from(tbody.querySelectorAll("tr"));
+  const rowsPerPage = 5;
+  let currentPage = 1;
+
+  // Get filtered rows (based on current search)
+  function getVisibleRows() {
+    return allRows.filter(row => row.dataset.visible === "true");
+  }
+
+  function filterRows() {
+    const keyword = searchInput.value.toLowerCase();
+    allRows.forEach(row => {
+      const text = row.textContent.toLowerCase();
+      const match = text.includes(keyword);
+      row.dataset.visible = match ? "true" : "false";
+    });
+  }
+
+  function displayPage(page) {
+    filterRows();
+    const visibleRows = getVisibleRows();
+    const totalVisible = visibleRows.length;
+    const start = (page - 1) * rowsPerPage;
+    const end = start + rowsPerPage;
+
+    allRows.forEach(row => row.style.display = "none");
+
+    if (totalVisible === 0) {
+      noResults.style.display = "block";
+      pagination.style.display = "none";
+    } else {
+      noResults.style.display = "none";
+      pagination.style.display = "flex";
+      visibleRows.slice(start, end).forEach(row => row.style.display = "");
+      updatePagination(totalVisible, page);
+    }
+  }
+
+  function updatePagination(totalVisible, page) {
+    const pageCount = Math.ceil(totalVisible / rowsPerPage);
+    pagination.innerHTML = "";
+
+    for (let i = 1; i <= pageCount; i++) {
+      const li = document.createElement("li");
+      li.className = `page-item ${i === page ? "active" : ""}`;
+      li.innerHTML = `<a href="#" class="page-link">${i}</a>`;
+      li.addEventListener("click", (e) => {
+        e.preventDefault();
+        currentPage = i;
+        displayPage(i);
+      });
+      pagination.appendChild(li);
+    }
+  }
+
+  // When user types in search
+  searchInput.addEventListener("input", () => {
+    currentPage = 1;
+    displayPage(currentPage);
+  });
+
+  // Initial setup
+  allRows.forEach(row => row.dataset.visible = "true");
+  displayPage(currentPage);
+</script>
+
+{% endblock %}

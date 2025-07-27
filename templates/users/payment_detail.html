@@ -1,0 +1,64 @@
+{% extends "users/base.html" %}
+{% load static %}
+
+{% block title %}Payment Details{% endblock %}
+
+{% block content %}
+{% include "users/sidebar.html" %}
+
+<main class="main-content position-relative max-height-vh-100 h-100 mt-1 border-radius-lg">
+  {% include "users/nav.html" %}
+
+  <div class="container-fluid py-4">
+    <div class="row justify-content-center">
+      <div class="col-lg-8">
+        <div class="card shadow">
+          <div class="card-header bg-gradient-primary text-white d-flex justify-content-between align-items-center">
+            <h5 class="mb-0"><i class="fas fa-file-invoice-dollar me-2"></i>Payment Details</h5>
+            <a href="{% url 'payment_list' %}" class="btn btn-light btn-sm">
+              <i class="fas fa-arrow-left me-1"></i> Back
+            </a>
+          </div>
+          <div class="card-body px-4 py-4">
+            <div class="row mb-3">
+              <div class="col-sm-5 fw-bold text-muted">Production Line:</div>
+              <div class="col-sm-7">{{ payment.production_line.name }}</div>
+            </div>
+            <div class="row mb-3">
+              <div class="col-sm-5 fw-bold text-muted">Client Name:</div>
+              <div class="col-sm-7">{{ payment.client_name }}</div>
+            </div>
+            <div class="row mb-3">
+              <div class="col-sm-5 fw-bold text-muted">Contact Info:</div>
+              <div class="col-sm-7">{{ payment.contact }}</div>
+            </div>
+            <div class="row mb-3">
+              <div class="col-sm-5 fw-bold text-muted">Payment Amount:</div>
+              <div class="col-sm-7 text-success fw-semibold">${{ payment.payment_amount }}</div>
+            </div>
+            <hr>
+            <div class="row mb-3">
+              <div class="col-sm-5 fw-bold text-muted">Created By:</div>
+              <div class="col-sm-7">
+                {% if payment.created_by %}
+                  {{ payment.created_by.get_full_name|default:payment.created_by.username }}
+                {% else %}
+                  <em class="text-muted">—</em>
+                {% endif %}
+              </div>
+            </div>
+            <div class="row mb-3">
+              <div class="col-sm-5 fw-bold text-muted">Created At:</div>
+              <div class="col-sm-7">{{ payment.created_at|date:"Y-m-d H:i" }}</div>
+            </div>
+            <div class="row">
+              <div class="col-sm-5 fw-bold text-muted">Last Updated:</div>
+              <div class="col-sm-7">{{ payment.updated_at|date:"Y-m-d H:i" }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+{% endblock %}

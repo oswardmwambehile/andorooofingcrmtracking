@@ -1,0 +1,28 @@
+{% extends "manager/base.html" %}
+{% load static %}
+
+{% block content %}
+  {% include "manager/sidebar.html" %}
+  
+  <div class="main-panel">
+    <div class="main-header">
+      {% include "manager/nav.html" %}
+    </div>
+
+    <div class="container">
+      <div class="page-inner">
+        <h3>Production Line Details</h3>
+        <div class="card">
+          <div class="card-body">
+            <table class="table table-bordered">
+              <tr><th>Name</th><td>{{ production_line.name }}</td></tr>
+              <tr><th>Created At</th><td>{{ production_line.created_at|date:"Y-m-d H:i" }}</td></tr>
+              <tr><th>Updated At</th><td>{{ production_line.updated_at|date:"Y-m-d H:i" }}</td></tr>
+            </table>
+            <a href="{% url 'manager_view_production_lines' %}" class="btn btn-secondary">Back to List</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}

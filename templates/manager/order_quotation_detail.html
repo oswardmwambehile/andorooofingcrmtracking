@@ -1,0 +1,57 @@
+{% extends "manager/base.html" %}
+{% load static %}
+
+{% block content %}
+  {% include "manager/sidebar.html" %}
+  
+  <div class="main-panel">
+    <div class="main-header">
+      <div class="main-header-logo">
+        <div class="logo-header" data-background-color="dark">
+          <a href="index.html" class="logo">
+            <img
+              src="{% static 'assets/img/kaiadmin/logo_light.svg' %}"
+              alt="navbar brand"
+              class="navbar-brand"
+              height="20"
+            />
+          </a>
+        </div>
+      </div>
+      {% include "manager/nav.html" %}
+    </div>
+
+    <div class="container">
+      <div class="page-inner">
+        <h3>Order Quotation Details</h3>
+        <table class="table table-bordered">
+          <tr>
+            <th>Client Name</th>
+            <td>{{ quotation.client_name }}</td>
+          </tr>
+          <tr>
+            <th>Production Line</th>
+            <td>{{ quotation.production_line.name }}</td>
+          </tr>
+          <tr>
+            <th>Quotation</th>
+            <td>{{ quotation.quotation }}</td>
+          </tr>
+          <tr>
+            <th>Created By</th>
+            <td>{{ quotation.created_by.get_full_name|default:quotation.created_by.username }}</td>
+          </tr>
+          <tr>
+            <th>Created At</th>
+            <td>{{ quotation.created_at|date:"Y-m-d H:i" }}</td>
+          </tr>
+          <tr>
+            <th>Updated At</th>
+            <td>{{ quotation.updated_at|date:"Y-m-d H:i" }}</td>
+          </tr>
+        </table>
+        <a href="{% url 'manager_view_order_quotations' %}" class="btn btn-secondary">Back to List</a>
+      </div>
+    </div>
+  </div>
+{% endblock %}
