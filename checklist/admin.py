@@ -10,13 +10,26 @@ admin.site.site_title = "Welcome to Admin"
 admin.site.index_title = "Welcome to ANDO Admin Dashboard"
 
 
+
+from django.contrib import admin
+from django.contrib.auth.admin import UserAdmin
+from django.utils.html import format_html
+from .models import CustomUser
+
 class CustomUserAdmin(UserAdmin):
     model = CustomUser
 
-    list_display = ('email', 'username', 'user_type', 'is_staff', 'is_active', 'display_profile_picture', 'date_joined',)
-    list_filter = ('is_staff', 'is_active', 'user_type')
-    search_fields = ('email', 'username')
-    ordering = ('email',)
+    list_display = (
+        'email', 'first_name', 'last_name', 'position', 'zone', 'branch', 'contact',
+        'is_staff', 'is_active', 'display_profile_picture', 'date_joined',
+    )
+    list_filter = (
+        'is_staff', 'is_active', 'position', 'zone', 'branch',
+    )
+    search_fields = ('email', 'first_name', 'last_name', 'position', 'zone', 'branch')
+
+    # Order users by creation date (newest first)
+    ordering = ('-date_joined',)
 
     readonly_fields = ('date_joined', 'display_profile_picture')
 
@@ -25,10 +38,16 @@ class CustomUserAdmin(UserAdmin):
             'fields': ('email', 'password')
         }),
         ('Personal Info', {
-            'fields': ('username', 'user_type', 'profile_picture', 'display_profile_picture')
+            'fields': (
+                'first_name', 'last_name', 'profile_picture', 'display_profile_picture',
+                'position', 'zone', 'branch', 'contact',
+            )
         }),
         ('Permissions & Groups', {
-            'fields': ('is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions')
+            'fields': (
+                'is_active', 'is_staff', 'is_superuser',
+                'groups', 'user_permissions'
+            )
         }),
         ('Important Dates', {
             'fields': ('last_login', 'date_joined')
@@ -38,20 +57,28 @@ class CustomUserAdmin(UserAdmin):
     add_fieldsets = (
         (None, {
             'classes': ('wide',),
-            'fields': ('email', 'username', 'user_type', 'profile_picture', 'password1', 'password2', 'is_staff', 'is_active')}
-        ),
+            'fields': (
+                'email', 'first_name', 'last_name', 'password1', 'password2',
+                'profile_picture', 'position', 'zone', 'branch', 'contact',
+                'is_staff', 'is_active'
+            ),
+        }),
     )
 
     def display_profile_picture(self, obj):
         if obj.profile_picture:
-            return format_html('<img src="{}" width="40" height="40" style="border-radius:50%;" />', obj.profile_picture.url)
+            return format_html(
+                '<img src="{}" width="40" height="40" style="border-radius:50%;" />',
+                obj.profile_picture.url
+            )
         return "No Image"
     display_profile_picture.short_description = 'Profile Picture'
 
-    def get_fieldsets(self, request, obj=None):
-        return super().get_fieldsets(request, obj)
-
+# Register the custom user model
 admin.site.register(CustomUser, CustomUserAdmin)
+
+
+
 
 from django.contrib import admin
 from .models import ProductionLine, VisitsAchieved
@@ -176,6 +203,30 @@ class RouteClientAdmin(admin.ModelAdmin):
     def next_step_short(self, obj):
         return (obj.next_step[:40] + '...') if len(obj.next_step) > 40 else obj.next_step
     next_step_short.short_description = 'Next Step'
+
+
+from django.contrib import admin
+from .models import DailyTarget
+
+@admin.register(DailyTarget)
+class DailyTargetAdmin(admin.ModelAdmin):
+    list_display = (
+        'production_line',
+        'assigned',
+        'to_be_achieved',
+        'added_by',
+        'created_at',
+        'updated_at',
+    )
+    list_filter = ('production_line', 'added_by', 'created_at')
+    search_fields = ('production_line__name', 'added_by__username', 'added_by__email')
+    readonly_fields = ('created_at', 'updated_at')
+    ordering = ('-created_at',)
+
+    # Optional: Show a nice title in the form view
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related('production_line', 'added_by')
+
 
 
 

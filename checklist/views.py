@@ -32,7 +32,7 @@ def login_user(request):
             
 
             # Redirect based on user_type
-            if user.user_type == 'manager':
+            if user.position == 'MANAGER':
                 return redirect('index')
             else:
                 return redirect('dashboard')
@@ -43,57 +43,47 @@ def login_user(request):
     return render(request, 'auth/login.html')
 
 
+from django.shortcuts import render, redirect
+from django.contrib import messages
+from django.contrib.auth import get_user_model
+from django.core.exceptions import ValidationError
 
+User = get_user_model()
 
 def register(request):
     if request.method == 'POST':
-        username = request.POST.get('name')
         email = request.POST.get('email')
+        first_name = request.POST.get('first_name')
+        last_name= request.POST.get('last_name')
         password = request.POST.get('password')
         password1 = request.POST.get('password1')
         profile_picture = request.FILES.get('profile_picture')
-
-        # Validation
-        if len(username) < 3:
-            messages.error(request, 'Username must be at least 3 characters long.')
-            return redirect('register')
-
-        if not re.match(r"^[a-zA-Z0-9_]*$", username):
-            messages.error(request, 'Username can only contain letters, numbers, and underscores.')
-            return redirect('register')
-
-        if len(password) < 5:
-            messages.error(request, 'Password must be at least 5 characters long.')
-            return redirect('register')
-
-        if not re.search(r'[A-Za-z]', password) or not re.search(r'[0-9]', password):
-            messages.error(request, 'Password must contain both letters and numbers.')
-            return redirect('register')
+        position = request.POST.get('position')
+        zone = request.POST.get('zone')
+        branch = request.POST.get('branch')
+        contact = request.POST.get('contact')
 
         if password != password1:
-            messages.error(request, 'Passwords do not match.')
+            messages.error(request, "Passwords do not match.")
             return redirect('register')
 
-        if CustomUser.objects.filter(email=email).exists():
-            messages.error(request, 'Email is already registered.')
+        if User.objects.filter(email=email).exists():
+            messages.error(request, "Email already registered.")
             return redirect('register')
 
-        if CustomUser.objects.filter(username=username).exists():
-            messages.error(request, 'Username is already taken.')
-            return redirect('register')
-
-        # Create the user
-        user = CustomUser.objects.create_user(
+        user = User.objects.create_user(
             email=email,
-            username=username,
             password=password,
+            first_name=first_name,
+             last_name=last_name,
+            profile_picture=profile_picture,
+            position=position,
+            zone=zone,
+            branch=branch,
+            contact=contact
         )
 
-        if profile_picture:
-            user.profile_picture = profile_picture
-            user.save()
-
-        messages.success(request, 'You have successfully registered.')
+        messages.success(request, "Account created successfully.")
         return redirect('login')
 
     return render(request, 'auth/register.html')
