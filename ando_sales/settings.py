@@ -38,7 +38,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'checklist'
+    'checklist',
+    'django.contrib.humanize',
 ]
 
 MIDDLEWARE = [
@@ -130,6 +131,8 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 # settings.py
 AUTH_USER_MODEL = 'checklist.CustomUser'
+
+LOGIN_URL = '/auth/login/'
 
 
 

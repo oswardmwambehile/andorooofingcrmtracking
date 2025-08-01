@@ -1,0 +1,90 @@
+{% extends "manager/base.html" %}
+{% load static %}
+
+{% block content %}
+  {% include "manager/sidebar.html" %}
+  <div class="main-panel">
+    <div class="main-header">
+      <div class="main-header-logo">
+        <div class="logo-header" data-background-color="dark">
+          <a href="index.html" class="logo">
+            <img
+              src="{% static 'assets/img/kaiadmin/logo_light.svg' %}"
+              alt="navbar brand"
+              class="navbar-brand"
+              height="20"
+            />
+          </a>
+          <div class="nav-toggle">
+            <button class="btn btn-toggle toggle-sidebar"><i class="gg-menu-right"></i></button>
+            <button class="btn btn-toggle sidenav-toggler"><i class="gg-menu-left"></i></button>
+          </div>
+          <button class="topbar-toggler more"><i class="gg-more-vertical-alt"></i></button>
+        </div>
+      </div>
+      {% include "manager/nav.html" %}
+    </div>
+
+    <div class="container">
+      <div class="page-inner">
+        <div class="d-flex align-items-left align-items-md-center flex-column flex-md-row pt-2 pb-4">
+          <div></div>
+        </div>
+
+        <div class="container mt-5">
+          <h2 class="mb-4">Manager Review for Form #{{ form_submission.id }}</h2>
+
+          <!-- Messages -->
+          {% if messages %}
+            <div>
+              {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                  {{ message }}
+                  <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+              {% endfor %}
+            </div>
+          {% endif %}
+
+          
+
+          <!-- Review Form -->
+          <div class="card">
+            <div class="card-header">
+              Update Review
+            </div>
+            <div class="card-body">
+              <form method="post" novalidate>
+                {% csrf_token %}
+                <table class="table table-bordered">
+                  <tbody>
+                    {% for field in form %}
+                      <tr>
+                        <th>{{ field.label }}</th>
+                        <td>
+                          <div class="mb-3">
+                            {{ field }}
+
+                            {% if field.help_text %}
+                              <div class="form-text">{{ field.help_text }}</div>
+                            {% endif %}
+                            {% for error in field.errors %}
+                              <div class="text-danger small">{{ error }}</div>
+                            {% endfor %}
+                          </div>
+                        </td>
+                      </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+
+                <button type="submit" class="btn btn-primary">Submit Review</button>
+              </form>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+{% endblock %}

@@ -4,7 +4,7 @@
   <div class="sidebar-logo">
     <!-- Logo Header -->
     <div class="logo-header" data-background-color="dark">
-      <a href="{% url 'route_clients' %}" class="logo">
+      <a href="" class="logo">
         <img src="{% static 'assets/img/ando.svg' %}" alt="navbar brand" class="navbar-brand" height="20" />
       </a>
       <div class="nav-toggle">
@@ -50,81 +50,38 @@
         <li class="nav-item">
           <a data-bs-toggle="collapse" href="#profile">
             <i class="fas fa-user-circle"></i>
-            <p>Profile</p>
+            <p>MANAGE ACCOUNTS</p>
             <span class="caret"></span>
           </a>
           <div class="collapse" id="profile">
             <ul class="nav nav-collapse">
               <li><a href="#"><span class="sub-item">Update Profile</span></a></li>
               <li><a href="{%url 'change_password'%}"><span class="sub-item">Change Password</span></a></li>
+              <li><a href="{%url 'logout'%}"><span class="sub-item">Logout</span></a></li>
             </ul>
           </div>
         </li>
 
         <!-- Visits Achieved -->
         <li class="nav-item">
-          <a href="{%url 'manager_visits_achieved'%}">
+          <a href="{%url 'manager_submissions_list'%}">
             <i class="fas fa-check-circle"></i>
-            <p>Visits Achieved</p>
+            <p>View Submissions</p>
           </a>
         </li>
 
-        <!-- Order Quoted -->
-        <li class="nav-item">
-          <a href="{%url 'manager_view_order_quotations'%}">
-            <i class="fas fa-file-invoice-dollar"></i>
-            <p>Order Quoted</p>
-          </a>
-        </li>
+      
 
-        <!-- Payment Collected -->
-        <li class="nav-item">
-          <a href="{%url 'manager_view_payments_collected'%}">
-            <i class="fas fa-hand-holding-usd"></i>
-            <p>Payment Collected</p>
-          </a>
-        </li>
+        
 
-        <!-- Route Clients -->
-        <li class="nav-item">
-          <a href="{% url 'manager_view_route_clients' %}">
-            <i class="fas fa-route"></i>
-            <p>Route Clients List</p>
-          </a>
-        </li>
-
+        
         <!-- New Leads -->
-        <li class="nav-item">
-          <a href="{%url 'manager_view_leads'%}">
-            <i class="fas fa-user-plus"></i>
-            <p>New Leads</p>
-          </a>
-        </li>
+        
+        
 
-        <!-- Production Line -->
-        <li class="nav-item">
-          <a href="{%url 'manager_view_production_lines'%}">
-            <i class="fas fa-industry"></i>
-            <p>Production Line</p>
-          </a>
-        </li>
+        
 
-        <!-- Routes -->
-        <li class="nav-item">
-          <a href="#">
-            <i class="fas fa-map-marked-alt"></i>
-            <p>Routes</p>
-          </a>
-        </li>
-
-        <!-- Quotations -->
-        <li class="nav-item">
-          <a href="{%url 'manager_view_users'%}">
-            <i class="fas fa-file-signature"></i>
-            <p>Available Users</p>
-            
-          </a>
-        </li>
+        
 
       </ul>
     </div>

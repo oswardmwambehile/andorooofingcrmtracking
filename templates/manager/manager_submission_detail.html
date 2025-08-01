@@ -1,0 +1,186 @@
+{% extends "manager/base.html" %}
+{% load static %}
+{% load humanize %}
+
+{% block content %}
+{% include "manager/sidebar.html" %}
+
+<div class="main-panel">
+  <div class="main-header">
+    {% include "manager/nav.html" %}
+  </div>
+
+  <div class="container-fluid py-4">
+
+    <!-- Page Title -->
+    <div class="mb-3">
+      <h2 class="text-dark fw-bold">Sales Metrics for the Day</h2>
+    </div>
+
+    <!-- Header with Date and Status Badge + Update Button -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h4 class="text-primary mb-0">SALES METRICS FOR: {{ submission.created_at|date:"Y-m-d" }}</h4>
+      <div class="d-flex align-items-center">
+        <span class="badge 
+          {% if submission.status == 'approved' %} bg-success
+          {% elif submission.status == 'rejected' %} bg-danger
+          {% elif submission.status == 'reviewed' %} bg-info
+          {% elif submission.status == 'resubmite' %} bg-gradient-warning text-dark
+          {% elif submission.status == 'opened' %} bg-primary
+          {% else %} bg-gradient-dark
+          {% endif %}
+          px-3 py-2 rounded-pill">
+          {{ submission.get_status_display }}
+        </span>
+        <a href="{% url 'manager_review' submission.id %}" class="btn btn-sm btn-outline-primary ms-3">
+          Review Form
+        </a>
+      </div>
+    </div>
+
+    <!-- Section: Visits -->
+    <div class="card mb-4 shadow-sm">
+      <div class="card-header bg-light">
+        <h6 class="text-uppercase text-secondary mb-0">Number of Visits Achieved</h6>
+      </div>
+      <div class="card-body table-responsive">
+        <table class="table table-bordered text-center align-middle">
+          <thead class="table-light">
+            <tr><th>New</th><th>Old</th></tr>
+          </thead>
+          <tbody>
+            {% for v in visits %}
+            <tr><td>{{ v.new }}</td><td>{{ v.old }}</td></tr>
+            {% empty %}
+            <tr><td colspan="2">No visits recorded.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Section: Quotations -->
+    <div class="card mb-4 shadow-sm">
+      <div class="card-header bg-light">
+        <h6 class="text-uppercase text-secondary mb-0">Total Amount of Order Quoted</h6>
+      </div>
+      <div class="card-body table-responsive">
+        <table class="table table-bordered text-center align-middle">
+          <thead class="table-light">
+            <tr>
+              <th>No.</th>
+              <th>Production Line</th>
+              <th>Client / Company Name</th>
+              <th>Contact</th>
+              <th>Quotation</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for q in quotations %}
+            <tr>
+              <td>{{ forloop.counter }}</td>
+              <td>{{ q.production_line }}</td>
+              <td>{{ q.client_name }}</td>
+              <td>{{ q.contact }}</td>
+              <td>TZS {{ q.quotation|intcomma }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="5">No quotations submitted.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        <div class="text-end pe-4 pt-2">
+          <strong>Total Quotation Amount:</strong>
+          <span class="text-primary">TZS {{ total_quotation|intcomma }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section: Payments -->
+    <div class="card mb-4 shadow-sm">
+      <div class="card-header bg-light">
+        <h6 class="text-uppercase text-secondary mb-0">Total Amount of Payment Collected</h6>
+      </div>
+      <div class="card-body table-responsive">
+        <table class="table table-bordered text-center align-middle">
+          <thead class="table-light">
+            <tr>
+              <th>No.</th>
+              <th>Production Line</th>
+              <th>Client / Company Name</th>
+              <th>Contact</th>
+              <th>Payment Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for p in payments %}
+            <tr>
+              <td>{{ forloop.counter }}</td>
+              <td>{{ p.production_line }}</td>
+              <td>{{ p.client_name }}</td>
+              <td>{{ p.contact }}</td>
+              <td>TZS {{ p.payment_amount|intcomma }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="5">No payments recorded.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        <div class="text-end pe-4 pt-2">
+          <strong>Total Payment Collected:</strong>
+          <span class="text-success">TZS {{ total_payment|intcomma }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section: Leads -->
+    <div class="card mb-4 shadow-sm">
+      <div class="card-header bg-light">
+        <h6 class="text-uppercase text-secondary mb-0">Number of New Leads Added</h6>
+      </div>
+      <div class="card-body table-responsive">
+        <table class="table table-bordered text-center align-middle">
+          <thead class="table-light">
+            <tr>
+              <th>No.</th>
+              <th>Production Line</th>
+              <th>Client / Company Name</th>
+              <th>Contact</th>
+              <th>Designation</th>
+              <th>Location</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for l in leads %}
+            <tr>
+              <td>{{ forloop.counter }}</td>
+              <td>{{ l.production_line }}</td>
+              <td>{{ l.client_name }}</td>
+              <td>{{ l.contact }}</td>
+              <td>{{ l.designation }}</td>
+              <td>
+                {% if l.latitude and l.longitude %}
+                  <a href="https://www.google.com/maps/search/?api=1&query={{ l.latitude }},{{ l.longitude }}" target="_blank">
+                    📍 {{ l.place_name }}<br><small>(View on Map)</small>
+                  </a>
+                {% else %}
+                  Not Available
+                {% endif %}
+              </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="6">No leads added.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Back Button -->
+    <div class="text-end mt-4">
+      <a href="{% url 'manager_submissions_list' %}" class="btn btn-secondary">Back to Submissions</a>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

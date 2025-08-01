@@ -48,7 +48,7 @@
           </div>
           <span class="profile-username">
             <span class="op-7">Hi,</span>
-            <span class="fw-bold">{{ request.user.first_name|default:request.user.username }}</span>
+            <span class="fw-bold">{{ request.user.first_name|default:request.user.email }}</span>
           </span>
         </a>
         <ul class="dropdown-menu dropdown-user animated fadeIn">
@@ -63,7 +63,7 @@
                   {% endif %}
                 </div>
                 <div class="u-text">
-                  <h4>{{ request.user.get_full_name|default:request.user.username }}</h4>
+                  <h4>{{ request.user.get_full_name|default:request.user.email }}</h4>
                   <p class="text-muted">{{ request.user.email }}</p>
                   <a href="{% url 'manager_user_profile' %}" class="btn btn-xs btn-secondary btn-sm">View Profile</a>
                 </div>

@@ -61,6 +61,12 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
 
     def __str__(self):
         return self.email
+    
+    def get_full_name(self):
+        return f"{self.first_name} {self.last_name}".strip()
+
+    def get_short_name(self):
+        return self.first_name
 
 
 
@@ -76,19 +82,157 @@ class ProductionLine(models.Model):
 
 
 
+from django.conf import settings
+from django.db import models
+
+# Shared STATUS choices
+STATUS_CHOICES = [
+    ('opened', 'Opened'),
+    ('rejected', 'Rejected'),
+    ('approved', 'Approved'),
+    ('resubmite', 'Resubmit'),
+]
+
+DESIGNATION_CHOICES = [
+    ('Owner', 'Owner'),
+    ('Engineer', 'Engineer'),
+    ('Contractor', 'Contractor'),
+]
+
+
+from django.db import models
+from django.conf import settings
+from django.utils.timezone import now
+
+STATUS_CHOICES = [
+    ('opened', 'Opened'),
+    ('rejected', 'Rejected'),
+    ('approved', 'Approved'),
+    ('resubmite', 'Resubmit'),
+]
+
+class FormSubmission(models.Model):
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='submissions'
+    )
+
+    # Final status saved after both managers review
+    final_status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='opened')
+
+    # Manager 1 review
+    manager1 = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name='first_reviews'
+    )
+    manager1_status = models.CharField(max_length=10, choices=STATUS_CHOICES, null=True, blank=True)
+    manager1_comment = models.TextField(null=True, blank=True)
+    manager1_reviewed_at = models.DateTimeField(null=True, blank=True)
+
+    # Manager 2 review
+    manager2 = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name='second_reviews'
+    )
+    manager2_status = models.CharField(max_length=10, choices=STATUS_CHOICES, null=True, blank=True)
+    manager2_comment = models.TextField(null=True, blank=True)
+    manager2_reviewed_at = models.DateTimeField(null=True, blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    
+    def save(self, *args, **kwargs):
+        # Ensure new forms always start with "opened"
+        if not self.pk:
+            self.final_status = 'opened'
+        super().save(*args, **kwargs)
+
+    def is_reviewed_by(self, user):
+        """Check if the given user has already submitted a review."""
+        return user == self.manager1 or user == self.manager2
+
+    def is_fully_reviewed(self):
+        """True if both managers have reviewed."""
+        return self.manager1 and self.manager2
+
+    def save_review(self, user, status, comment):
+        """Handles logic for saving a manager's review."""
+        if self.is_reviewed_by(user):
+            raise ValueError("You have already reviewed this form.")
+
+        if self.manager1 is None:
+            self.manager1 = user
+            self.manager1_status = status
+            self.manager1_comment = comment
+            self.manager1_reviewed_at = now()
+        elif self.manager2 is None:
+            self.manager2 = user
+            self.manager2_status = status
+            self.manager2_comment = comment
+            self.manager2_reviewed_at = now()
+            self._finalize_status()
+        else:
+            raise ValueError("Both managers have already submitted their reviews.")
+
+        self.save()
+
+    def _finalize_status(self):
+        """Determine the final status after both managers review."""
+        statuses = [self.manager1_status, self.manager2_status]
+
+        if all(s == 'approved' for s in statuses):
+            self.final_status = 'approved'
+        elif 'rejected' in statuses:
+            self.final_status = 'rejected'
+        elif 'resubmite' in statuses:
+            self.final_status = 'resubmite'
+        else:
+            self.final_status = 'opened'  # fallback if mixed/undefined
+
+    def get_review_summary(self):
+        return {
+            "manager1": {
+                "user": self.manager1.email if self.manager1 else None,
+                "status": self.manager1_status,
+                "comment": self.manager1_comment,
+                "reviewed_at": self.manager1_reviewed_at,
+            },
+            "manager2": {
+                "user": self.manager2.email if self.manager2 else None,
+                "status": self.manager2_status,
+                "comment": self.manager2_comment,
+                "reviewed_at": self.manager2_reviewed_at,
+            },
+            "final_status": self.final_status,
+        }
 
 
 
 class VisitsAchieved(models.Model):
+    submission = models.ForeignKey(
+        FormSubmission,
+        on_delete=models.CASCADE,
+        related_name='visits',
+        null=True,
+        blank=True
+    )
     new = models.IntegerField()
     old = models.IntegerField()
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='opened')
+
     added_by = models.ForeignKey(
-        settings.AUTH_USER_MODEL,  # This supports custom user models
+        settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name='visits_added',
-        help_text="User who added this record (optional)"
+        related_name='visits_added'
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -101,13 +245,23 @@ class VisitsAchieved(models.Model):
         return f"New: {self.new}, Old: {self.old}"
 
 
-
-
 class OrderQuotation(models.Model):
-    production_line = models.ForeignKey('ProductionLine', on_delete=models.CASCADE, related_name='quotations')
+    submission = models.ForeignKey(
+        FormSubmission,
+        on_delete=models.CASCADE,
+        related_name='quotations',
+        null=True,
+        blank=True
+    )
+    production_line = models.ForeignKey(
+        'ProductionLine',
+        on_delete=models.CASCADE,
+        related_name='quotations'
+    )
     client_name = models.CharField(max_length=150)
     contact = models.CharField(max_length=100)
-    quotation = models.DecimalField(max_digits=10, decimal_places=2)
+    quotation = models.DecimalField(max_digits=17, decimal_places=2)
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='opened')
 
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -123,14 +277,31 @@ class OrderQuotation(models.Model):
         return f"{self.client_name} - {self.production_line.name}"
 
 
-
 class PaymentCollected(models.Model):
-    production_line = models.ForeignKey(ProductionLine, on_delete=models.CASCADE, related_name='payments')
+    submission = models.ForeignKey(
+        FormSubmission,
+        on_delete=models.CASCADE,
+        related_name='payments',
+        null=True,
+        blank=True
+    )
+    production_line = models.ForeignKey(
+        'ProductionLine',
+        on_delete=models.CASCADE,
+        related_name='payments'
+    )
     client_name = models.CharField(max_length=255)
-    contact = models.CharField(max_length=100)  # e.g., phone or email
+    contact = models.CharField(max_length=100)
     payment_amount = models.DecimalField(max_digits=16, decimal_places=2)
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='opened')
 
-    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='payments_collected')
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='payments_collected'
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -146,19 +317,31 @@ from django.db import models
 from django.conf import settings
 
 class NewLead(models.Model):
-    DESIGNATION_CHOICES = [
-        ('Owner', 'Owner'),
-        ('Engineer', 'Engineer'),
-        ('Contractor', 'Contractor'),
-    ]
-
-    production_line = models.ForeignKey(ProductionLine, on_delete=models.CASCADE, related_name='leads')
+    submission = models.ForeignKey(
+        'FormSubmission',
+        on_delete=models.CASCADE,
+        related_name='leads',
+        null=True,
+        blank=True
+    )
+    production_line = models.ForeignKey(
+        'ProductionLine',
+        on_delete=models.CASCADE,
+        related_name='leads'
+    )
     client_name = models.CharField(max_length=255)
     contact = models.CharField(max_length=255)
     designation = models.CharField(max_length=20, choices=DESIGNATION_CHOICES)
-    added_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True)
-    location = models.CharField(max_length=255)
+    latitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
+    longitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='opened')
 
+    added_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -166,13 +349,6 @@ class NewLead(models.Model):
         return f"{self.client_name} - {self.designation}"
 
 
-
-from django.db import models
-from django.conf import settings
-
-# Assuming you already have this model elsewhere:
-# class ProductionLine(models.Model):
-#     name = models.CharField(max_length=100)
 
 class RouteClient(models.Model):
     PURPOSE_CHOICES = [
@@ -188,32 +364,35 @@ class RouteClient(models.Model):
     ]
 
     production_line = models.ForeignKey(
-        ProductionLine,  # Replace 'yourapp' with your actual app name
+        ProductionLine,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
         related_name='route_clients'
     )
-
     client_name = models.CharField(max_length=255, verbose_name="Client / Company Name")
     contact = models.CharField(max_length=100)
     purpose = models.CharField(max_length=10, choices=PURPOSE_CHOICES)
     priority = models.CharField(max_length=10, choices=PRIORITY_CHOICES)
     next_step = models.TextField(verbose_name="Your Next Step")
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='opened')
 
     added_by = models.ForeignKey(
-        settings.AUTH_USER_MODEL,  # or use 'yourapp.Customer' if not the default user model
+        settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
         related_name='added_route_clients'
     )
-
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return f"{self.client_name} ({self.production_line})"
+
+
+
+
     
 
 

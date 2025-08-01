@@ -1,0 +1,130 @@
+{% extends "manager/base.html" %}
+{% load static %}
+
+{% block content %}
+{% include "manager/sidebar.html" %}
+<div class="main-panel">
+  <div class="main-header">
+    {% include "manager/nav.html" %}
+  </div>
+
+  <div class="container-fluid py-4">
+    <h4 class="text-primary mb-4">My Submitted Sales Metrics</h4>
+
+    <div class="card shadow border-0">
+      <div class="card-header bg-gradient-primary text-white d-flex justify-content-between align-items-center">
+        <h6 class="mb-0">Submissions</h6>
+        <form method="get" class="mb-0">
+          <select name="final_status" onchange="this.form.submit()" class="form-select form-select-sm w-auto">
+            <option value="">Filter Forms By Status</option>
+            <option value="opened" {% if request.GET.final_status == "opened" %}selected{% endif %}>Opened</option>
+            <option value="reviewed" {% if request.GET.final_status == "reviewed" %}selected{% endif %}>Reviewed</option>
+            <option value="rejected" {% if request.GET.final_status == "rejected" %}selected{% endif %}>Rejected</option>
+            <option value="approved" {% if request.GET.final_status == "approved" %}selected{% endif %}>Approved</option>
+            <option value="resubmite" {% if request.GET.final_status == "resubmite" %}selected{% endif %}>Resubmit</option>
+          </select>
+        </form>
+      </div>
+
+      <div class="card-body p-0">
+        {% if page_obj %}
+        <div class="table-responsive">
+          <table class="table table-hover table-bordered align-middle mb-0">
+            <thead class="table-light text-center text-nowrap">
+              <tr>
+                <th>Form No</th>
+                <th>Profile</th>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Contact</th>
+                <th>Position</th>
+                <th>Zone</th>
+                <th>Branch</th>
+                <th>Submitted</th>
+                <th>Status</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for submission in page_obj %}
+              <tr class="text-nowrap text-center">
+                <td>#{{ submission.id|stringformat:"05d" }}</td>
+                <td>
+                  {% if submission.user.profile_picture %}
+                    <img src="{{ submission.user.profile_picture.url }}" class="rounded-circle" width="50" height="50" alt="Profile">
+                  {% else %}
+                    <img src="{% static 'img/default-profile.png' %}" class="rounded-circle" width="50" height="50" alt="Default">
+                  {% endif %}
+                </td>
+                <td>{{ submission.user.first_name }} {{ submission.user.last_name }}</td>
+                <td>{{ submission.user.email }}</td>
+                <td>{{ submission.user.contact|default:"N/A" }}</td>
+                <td>{{ submission.user.get_position_display|default:"N/A" }}</td>
+                <td>{{ submission.user.get_zone_display|default:"N/A" }}</td>
+                <td>{{ submission.user.get_branch_display|default:"N/A" }}</td>
+                <td>{{ submission.created_at|date:"Y-m-d H:i" }}</td>
+                <td>
+                  {% if submission.final_status == "opened" %}
+                    <span class="badge bg-warning text-dark">Opened</span>
+                  {% elif submission.final_status == "reviewed" %}
+                    <span class="badge bg-info text-white">Reviewed</span>
+                  {% elif submission.final_status == "rejected" %}
+                    <span class="badge bg-danger text-white">Rejected</span>
+                  {% elif submission.final_status == "approved" %}
+                    <span class="badge bg-success text-white">Approved</span>
+                  {% elif submission.final_status == "resubmite" %}
+                    <span class="badge bg-secondary text-white">Resubmit</span>
+                  {% else %}
+                    <span class="badge bg-dark text-white">Unknown</span>
+                  {% endif %}
+                </td>
+                <td>
+                  <a href="{% url 'manager_submission_detail' submission.id %}" class="btn btn-sm btn-primary d-inline-flex align-items-center gap-1 shadow-sm">
+                    <i class="fas fa-eye"></i> View Details
+                  </a>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Pagination -->
+        <nav class="mt-4 px-3" aria-label="Submissions pagination">
+          <ul class="pagination justify-content-end">
+            {% if page_obj.has_previous %}
+              <li class="page-item">
+                <a class="page-link" href="?{% if request.GET.final_status %}final_status={{ request.GET.final_status }}&{% endif %}page={{ page_obj.previous_page_number }}">&laquo;</a>
+              </li>
+            {% else %}
+              <li class="page-item disabled"><span class="page-link">&laquo;</span></li>
+            {% endif %}
+
+            {% for num in page_obj.paginator.page_range %}
+              {% if page_obj.number == num %}
+                <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+              {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                <li class="page-item"><a class="page-link" href="?{% if request.GET.final_status %}final_status={{ request.GET.final_status }}&{% endif %}page={{ num }}">{{ num }}</a></li>
+              {% endif %}
+            {% endfor %}
+
+            {% if page_obj.has_next %}
+              <li class="page-item">
+                <a class="page-link" href="?{% if request.GET.final_status %}final_status={{ request.GET.final_status }}&{% endif %}page={{ page_obj.next_page_number }}">&raquo;</a>
+              </li>
+            {% else %}
+              <li class="page-item disabled"><span class="page-link">&raquo;</span></li>
+            {% endif %}
+          </ul>
+        </nav>
+
+        {% else %}
+        <div class="p-4">
+          <p class="mb-0 text-muted">No submissions found.</p>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

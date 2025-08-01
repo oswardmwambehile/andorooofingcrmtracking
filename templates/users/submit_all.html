@@ -1,0 +1,281 @@
+{% extends "users/base.html" %}
+{% load static %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+{% include "users/sidebar.html" %}
+
+<main class="main-content position-relative max-height-vh-100 h-100 border-radius-lg">
+  {% include "users/nav.html" %}
+  <div class="container-fluid py-4">
+    <div class="row justify-content-center">
+      <div class="col-lg-11">
+        <div class="card shadow">
+          <div class="card-header bg-gradient-primary">
+            <h5 class="mb-0 text-white">SALES METRIC OF THE DAY</h5>
+          </div>
+          <div class="card-body">
+            <form method="post" novalidate>
+              {% csrf_token %}
+
+              <h6 class="text-dark">Number of Visits Achieved</h6>
+              <div class="row">
+                <div class="col-md-6 mb-3">
+                  {{ visit_form.new.label_tag }}
+                  {{ visit_form.new }}
+                  {% if visit_form.new.errors %}
+                    <div class="text-danger small">{{ visit_form.new.errors }}</div>
+                  {% endif %}
+                </div>
+                <div class="col-md-6 mb-3">
+                  {{ visit_form.old.label_tag }}
+                  {{ visit_form.old }}
+                  {% if visit_form.old.errors %}
+                    <div class="text-danger small">{{ visit_form.old.errors }}</div>
+                  {% endif %}
+                </div>
+              </div>
+
+              <h6 class="text-dark">TOTAL AMOUNT OF ORDER QUOTED</h6>
+              <div id="quote-formset">
+                {{ quotation_formset.management_form }}
+                {% for form in quotation_formset %}
+                  <div class="formset-item border px-3 py-2 mb-3">
+                    <div class="row">
+                      {% for field in form.visible_fields %}
+                        {% if field.name != 'DELETE' and field.name != 'id' %}
+                          <div class="col-md-6 mb-3">
+                            {{ field.label_tag }}
+                            {{ field }}
+                            {% if field.errors %}
+                              <div class="text-danger small">{{ field.errors }}</div>
+                            {% endif %}
+                          </div>
+                        {% endif %}
+                      {% endfor %}
+                    </div>
+                    <button type="button" class="btn btn-sm bg-gradient-danger text-white remove-form-btn">Remove</button>
+                  </div>
+                {% endfor %}
+              </div>
+              <button type="button" class="btn btn-outline-primary btn-sm mb-4" onclick="addForm('quote')">Add Quotation</button>
+
+              <h6 class="text-dark">TOTAL AMOUNT OF PAYMENT COLLECTED</h6>
+              <div id="payment-formset">
+                {{ payment_formset.management_form }}
+                {% for form in payment_formset %}
+                  <div class="formset-item border px-3 py-2 mb-3">
+                    <div class="row">
+                      {% for field in form.visible_fields %}
+                        {% if field.name != 'DELETE' and field.name != 'id' %}
+                          <div class="col-md-6 mb-3">
+                            {{ field.label_tag }}
+                            {{ field }}
+                            {% if field.errors %}
+                              <div class="text-danger small">{{ field.errors }}</div>
+                            {% endif %}
+                          </div>
+                        {% endif %}
+                      {% endfor %}
+                    </div>
+                    <button type="button" class="btn btn-sm bg-gradient-danger text-white remove-form-btn">Remove</button>
+                  </div>
+                {% endfor %}
+              </div>
+              <button type="button" class="btn btn-outline-primary btn-sm mb-4" onclick="addForm('payment')">Add Payment</button>
+
+              <h6 class="text-dark">NUMBER OF NEW LEADS ADDED</h6>
+              <div id="lead-formset">
+                {{ lead_formset.management_form }}
+                {% for form in lead_formset %}
+                  <div class="formset-item border px-3 py-2 mb-3">
+                    <div class="row">
+                      {% for field in form.visible_fields %}
+                        {% if field.name != 'DELETE' and field.name != 'id' and field.name != 'latitude' and field.name != 'longitude' %}
+                          <div class="col-md-6 mb-3">
+                            {{ field.label_tag }}
+                            {{ field }}
+                            {% if field.errors %}
+                              <div class="text-danger small">{{ field.errors }}</div>
+                            {% endif %}
+                          </div>
+                        {% endif %}
+                      {% endfor %}
+                    </div>
+                    {{ form.latitude }} {{ form.longitude }}
+                    <div style="height: 300px;" id="map-lead-{{ forloop.counter0 }}"></div>
+                    <button type="button" class="btn btn-sm bg-gradient-danger text-white remove-form-btn">Remove</button>
+                  </div>
+                {% endfor %}
+              </div>
+              <button type="button" class="btn btn-outline-primary btn-sm mb-4" onclick="addForm('lead')">Add Lead</button>
+
+              <div class="text-end mt-4">
+                <button type="submit" class="btn bg-gradient-primary text-white">Submit All</button>
+              </div>
+            </form>
+
+            <!-- Hidden Empty Form Templates -->
+            <div id="empty-form-templates" class="d-none">
+              <div id="lead-empty-form">
+                <div class="formset-item border px-3 py-2 mb-3">
+                  <div class="row">
+                    {% for field in lead_formset.empty_form.visible_fields %}
+                      {% if field.name != 'DELETE' and field.name != 'id' and field.name != 'latitude' and field.name != 'longitude' %}
+                        <div class="col-md-6 mb-3">
+                          {{ field.label_tag }}
+                          {{ field }}
+                        </div>
+                      {% endif %}
+                    {% endfor %}
+                  </div>
+                  {{ lead_formset.empty_form.latitude }} {{ lead_formset.empty_form.longitude }}
+                  <div style="height: 300px;" id="map-lead-__prefix__"></div>
+                  <button type="button" class="btn btn-sm bg-gradient-danger text-white remove-form-btn">Remove</button>
+                </div>
+              </div>
+
+              <div id="quote-empty-form">
+                <div class="formset-item border px-3 py-2 mb-3">
+                  <div class="row">
+                    {% for field in quotation_formset.empty_form.visible_fields %}
+                      {% if field.name != 'DELETE' and field.name != 'id' %}
+                        <div class="col-md-6 mb-3">
+                          {{ field.label_tag }}
+                          {{ field }}
+                        </div>
+                      {% endif %}
+                    {% endfor %}
+                  </div>
+                  <button type="button" class="btn btn-sm bg-gradient-danger text-white remove-form-btn">Remove</button>
+                </div>
+              </div>
+
+              <div id="payment-empty-form">
+                <div class="formset-item border px-3 py-2 mb-3">
+                  <div class="row">
+                    {% for field in payment_formset.empty_form.visible_fields %}
+                      {% if field.name != 'DELETE' and field.name != 'id' %}
+                        <div class="col-md-6 mb-3">
+                          {{ field.label_tag }}
+                          {{ field }}
+                        </div>
+                      {% endif %}
+                    {% endfor %}
+                  </div>
+                  <button type="button" class="btn btn-sm bg-gradient-danger text-white remove-form-btn">Remove</button>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- Leaflet CSS & JS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<!-- Leaflet Script -->
+<script>
+function updateTotalForms(prefix) {
+  const totalInput = document.getElementById(`id_${prefix}-TOTAL_FORMS`);
+  const formCount = document.querySelectorAll(`#${prefix}-formset .formset-item`).length;
+  totalInput.value = formCount;
+}
+
+function addForm(prefix) {
+  const formsetDiv = document.getElementById(`${prefix}-formset`);
+  const emptyFormHTML = document.querySelector(`#${prefix}-empty-form`).innerHTML;
+  const totalInput = document.getElementById(`id_${prefix}-TOTAL_FORMS`);
+  const index = parseInt(totalInput.value);
+  const newFormHTML = emptyFormHTML.replace(/__prefix__/g, index);
+  const wrapper = document.createElement('div');
+  wrapper.className = 'formset-item border px-3 py-2 mb-3';
+  wrapper.innerHTML = newFormHTML;
+  formsetDiv.appendChild(wrapper);
+  updateTotalForms(prefix);
+
+  if (prefix === 'lead') {
+    initMapForLead(index);
+  }
+}
+
+document.addEventListener('click', function (e) {
+  if (e.target.classList.contains('remove-form-btn')) {
+    const item = e.target.closest('.formset-item');
+    const prefix = item.closest('[id$="-formset"]').id.replace('-formset', '');
+    item.remove();
+    updateTotalForms(prefix);
+  }
+});
+
+const leadMaps = {};
+
+function initMapForLead(index) {
+  const mapId = `map-lead-${index}`;
+  const mapDiv = document.getElementById(mapId);
+  if (!mapDiv) return;
+
+  const defaultLat = -6.3690;
+  const defaultLng = 34.8888;
+
+  const map = L.map(mapId).setView([defaultLat, defaultLng], 6);
+
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; OpenStreetMap contributors'
+  }).addTo(map);
+
+  const marker = L.marker([defaultLat, defaultLng], { draggable: true }).addTo(map);
+
+  const latInput = document.getElementById(`id_lead-${index}-latitude`);
+  const lngInput = document.getElementById(`id_lead-${index}-longitude`);
+  if (latInput && lngInput) {
+    latInput.value = defaultLat;
+    lngInput.value = defaultLng;
+  }
+
+  async function updateLocation(lat, lng) {
+    if (latInput && lngInput) {
+      latInput.value = lat;
+      lngInput.value = lng;
+    }
+
+    try {
+      const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`);
+      const data = await res.json();
+      const displayName = data.display_name || 'Unknown location';
+      marker.bindPopup(displayName).openPopup();
+    } catch (e) {
+      marker.bindPopup("Location name not found").openPopup();
+    }
+  }
+
+  map.on('click', function (e) {
+    const { lat, lng } = e.latlng;
+    marker.setLatLng([lat, lng]);
+    updateLocation(lat, lng);
+  });
+
+  marker.on('dragend', function (e) {
+    const { lat, lng } = marker.getLatLng();
+    updateLocation(lat, lng);
+  });
+
+  leadMaps[`lead-${index}`] = map;
+}
+
+function initAllLeadMaps() {
+  const total = parseInt(document.getElementById('id_lead-TOTAL_FORMS').value);
+  for (let i = 0; i < total; i++) {
+    initMapForLead(i);
+  }
+}
+
+document.addEventListener('DOMContentLoaded', initAllLeadMaps);
+</script>
+{% endblock %}

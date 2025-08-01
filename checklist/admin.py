@@ -157,13 +157,12 @@ class NewLeadAdmin(admin.ModelAdmin):
         'contact',
         'designation',
         'production_line',
-        'location',
         'added_by',
         'created_at',
         'updated_at',
     )
     list_filter = ('designation', 'production_line', 'created_at')
-    search_fields = ('client_name', 'contact', 'location', 'added_by__username')
+    search_fields = ('client_name', 'contact', 'added_by__username')
     autocomplete_fields = ['production_line', 'added_by']
     readonly_fields = ('created_at', 'updated_at')
 
@@ -228,6 +227,23 @@ class DailyTargetAdmin(admin.ModelAdmin):
         return super().get_queryset(request).select_related('production_line', 'added_by')
 
 
+from .models import FormSubmission
 
+from django.contrib import admin
+from .models import FormSubmission
+
+@admin.register(FormSubmission)
+class FormSubmissionAdmin(admin.ModelAdmin):
+    list_display = ('serial_number', 'user_full_name', 'final_status', 'created_at')
+    list_filter = ('final_status', 'created_at')
+    search_fields = ('user__email', 'user__first_name', 'user__last_name')
+
+    def serial_number(self, obj):
+        return f"{obj.id:05d}"
+    serial_number.short_description = 'Serial #'
+
+    def user_full_name(self, obj):
+        return obj.user.get_full_name() or obj.user.email
+    user_full_name.short_description = 'Submitted By'
 
 
