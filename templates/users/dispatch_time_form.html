@@ -1,0 +1,89 @@
+{% extends "users/base.html" %}
+{% load static %}
+
+{% block title %}Set Dispatch Time for Form Submission{% endblock %}
+
+{% block content %}
+  {% include "users/sidebar.html" %}
+  <main class="main-content position-relative max-height-vh-100 h-100 mt-4 border-radius-lg bg-light">
+    <!-- Navbar -->
+    {% include "users/nav.html" %}
+    <!-- End Navbar -->
+
+    <div class="container-fluid py-4">
+      <!-- Card Section -->
+      <div class="row justify-content-center">
+        <div class="col-lg-8 col-md-10 col-sm-12">
+          <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white text-center p-4">
+              <h2 class="mb-0">Set Dispatch Time for Form Submission</h2>
+            </div>
+            <div class="card-body p-5">
+              <!-- Display the form to set the dispatch time -->
+              <form method="post" id="dispatch-time-form">
+                {% csrf_token %}
+                <div class="form-group mb-4">
+                  {{ form.as_p }}
+                </div>
+
+                <!-- Display the current form submission details -->
+                <div class="mb-4">
+                  <h5 class="font-weight-bold text-muted">Form Submission:</h5>
+                  <p>{{ form_submission.created_at|date:"Y-m-d H:i" }}</p>
+                </div>
+
+                <!-- A container to show the current time in East Africa -->
+                <div id="clock" class="text-center mb-4">
+                  <h3 id="current-time" class="font-weight-bold text-info">Loading...</h3>
+                </div>
+
+                <!-- The button to set the dispatch time -->
+                <div class="text-center">
+                  <button type="button" class="btn btn-success btn-lg px-5" id="set-time-btn">
+                    Set Dispatch Time
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Script to update the time every second -->
+      <script>
+        function updateClock() {
+          const clockElement = document.getElementById('current-time');
+
+          // Get current time in East Africa (EAT) with hours, minutes, and seconds
+          const now = new Date();
+          const hours = now.getHours();
+          const minutes = now.getMinutes();
+          const seconds = now.getSeconds();
+          const formattedTime = `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
+          clockElement.textContent = formattedTime;
+        }
+
+        function pad(num) {
+          return num < 10 ? '0' + num : num;
+        }
+
+        // Update the clock every second
+        setInterval(updateClock, 1000);
+        updateClock(); // Initial update
+
+        // When the user clicks the "Set Time" button, set the dispatch time
+        document.getElementById('set-time-btn').addEventListener('click', function() {
+          const currentTime = document.getElementById('current-time').textContent;
+          const [hours, minutes, seconds] = currentTime.split(':');
+
+          // Set the dispatch time in the hidden input field
+          const dispatchTimeInput = document.getElementById('id_dispatch_time');
+          dispatchTimeInput.value = `${hours}:${minutes}:${seconds}`;
+
+          // Submit the form
+          document.getElementById('dispatch-time-form').submit();
+        });
+      </script>
+    </div>
+  </main>
+{% endblock %}

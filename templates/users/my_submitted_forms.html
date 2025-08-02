@@ -26,6 +26,7 @@
                   <th scope="col">Form No</th>
                   <th scope="col">Submitted On</th>
                   <th scope="col">Status</th>
+                  <th scope="col">Dispatch Time</th> <!-- New Column -->
                   <th scope="col" class="text-center">Action</th>
                 </tr>
               </thead>
@@ -51,6 +52,19 @@
                         <span class="badge bg-secondary text-white">Resubmit</span>
                       {% else %}
                         <span class="badge bg-dark text-white">Unknown</span>
+                      {% endif %}
+                    </td>
+
+                    <td>
+                      {% if submission.dispatch_time %}
+                        <p class="text-sm mb-0">
+                          <!-- Format and display the time in AM/PM format -->
+                          <span class="badge bg-primary text-white">
+                            {{ submission.dispatch_time|date:"h:i A" }} 
+                          </span>
+                        </p>
+                      {% else %}
+                        <span class="badge bg-secondary text-white">Not Set Yet</span>
                       {% endif %}
                     </td>
 

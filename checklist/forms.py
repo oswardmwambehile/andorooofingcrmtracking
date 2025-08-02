@@ -142,20 +142,28 @@ class ManagerReviewForm(forms.Form):
         })
     )
 
-# forms.py
+
 
 from django import forms
-from .models import FormSubmission
+from django.utils.timezone import localtime
+from datetime import datetime
+import pytz
 
-class DispatchTimeForm(forms.ModelForm):
-    class Meta:
-        model = FormSubmission
-        fields = ['dispatch_time']
-        widgets = {
-            'dispatch_time': forms.TimeInput(attrs={
-                'type': 'time',
-                'class': 'form-control'
-            }),
-        }
+# Set East Africa Time (EAT)
+EAT = pytz.timezone('Africa/Nairobi')
+
+class DispatchTimeForm(forms.Form):
+    # We'll set a default placeholder value in the form for now
+    dispatch_time = forms.TimeField(widget=forms.HiddenInput(), required=False)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        # Get the current time in East Africa (EAT)
+        current_time_eat = localtime(datetime.now(EAT))
+
+        # Set a default value for the dispatch time (not allowing user input)
+        self.fields['dispatch_time'].initial = current_time_eat.time()
+
 
 

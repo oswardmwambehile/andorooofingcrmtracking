@@ -14,87 +14,59 @@
 
     <!-- Header -->
     <div class="d-flex justify-content-between align-items-center mb-4">
-      <h4 class="text-primary mb-0">Sales Metrics for: {{ submission.created_at|date:"Y-m-d" }}</h4>
+      <div>
+        <h4 class="text-primary mb-1">Sales Metrics for: {{ submission.created_at|date:"Y-m-d" }}</h4>
+        
+      </div>
     </div>
 
-    <!-- Manager Reviews Section (conditionally shown) -->
-    {% if submission.manager1_status or submission.manager2_status or submission.manager1_comment or submission.manager2_comment %}
+    <!-- Reviewers Section -->
+    {% if reviewers_info %}
     <div class="card mb-4 shadow">
+      <div class="card-header bg-light">
+        <h6 class="text-uppercase text-secondary mb-0">Reviewed By :</h6>
+      </div>
       <div class="card-body">
         <div class="row g-4">
 
-          {% if submission.manager1_status or submission.manager1_comment %}
-          <!-- Manager 1 -->
-          <div class="col-md-6">
+          {% for reviewer_info in reviewers_info %}
+          <div class="col-md-4">
             <div class="border rounded p-3 h-100">
               <div class="d-flex align-items-center mb-3">
-                <img src="{% if submission.manager1.profile_picture %}{{ submission.manager1.profile_picture.url }}{% else %}{% static 'img/default-profile.png' %}{% endif %}"
-                     alt="Manager 1" class="rounded-circle me-3" width="80" height="80">
+                <img src="{% if reviewer_info.reviewer.profile_picture %}{{ reviewer_info.reviewer.profile_picture.url }}{% else %}{% static 'img/default-profile.png' %}{% endif %}"
+                     alt="{{ reviewer_info.reviewer.get_full_name }}" class="rounded-circle me-3" width="80" height="80">
                 <div>
-                  <h6 class="mb-0"><strong>Full Name:</strong> {{ submission.manager1.get_full_name }}</h6>
-                  <small><strong>Position:</strong> {{ submission.manager1.get_position_display }}</small><br>
-                  <small><strong>Email:</strong> {{ submission.manager1.email }}</small><br>
-                  <small><strong>Contact:</strong> {{ submission.manager1.contact|default:"N/A" }}</small>
+                  <h6 class="mb-0"><strong>{{ reviewer_info.reviewer.get_full_name }}</strong></h6>
+                  <small><strong>Position:</strong> {{ reviewer_info.reviewer.get_position_display }}</small><br>
+                  
+                  <small><strong>Contact:</strong> {{ reviewer_info.reviewer.contact|default:"N/A" }}</small>
                 </div>
               </div>
               <div>
                 <p><strong>Status:</strong>
-                  {% if submission.manager1_status == "approved" %}
+                  {% if reviewer_info.status == "approved" %}
                     <span class="badge bg-success">Approved</span>
-                  {% elif submission.manager1_status == "rejected" %}
+                  {% elif reviewer_info.status == "rejected" %}
                     <span class="badge bg-danger">Rejected</span>
-                  {% elif submission.manager1_status == "resubmitted" %}
+                  {% elif reviewer_info.status == "resubmitted" %}
                     <span class="badge bg-warning text-dark">Resubmit</span>
                   {% else %}
                     <span class="badge bg-secondary">Pending</span>
                   {% endif %}
                 </p>
-                <p><strong>Comment:</strong><br>{{ submission.manager1_comment|default:"No comment provided." }}</p>
-                <p><strong>Reviewed On:</strong> {{ submission.manager1_reviewed_at|date:"Y-m-d H:i" }}</p>
+                <p><strong>Comment:</strong><br>{{ reviewer_info.comment|default:"No comment provided." }}</p>
+                <p><strong>Reviewed On:</strong> {{ reviewer_info.reviewed_at|date:"Y-m-d H:i" }}</p>
               </div>
             </div>
           </div>
-          {% endif %}
-
-          {% if submission.manager2_status or submission.manager2_comment %}
-          <!-- Manager 2 -->
-          <div class="col-md-6">
-            <div class="border rounded p-3 h-100">
-              <div class="d-flex align-items-center mb-3">
-                <img src="{% if submission.manager2.profile_picture %}{{ submission.manager2.profile_picture.url }}{% else %}{% static 'img/default-profile.png' %}{% endif %}"
-                     alt="Manager 2" class="rounded-circle me-3" width="80" height="80">
-                <div>
-                  <h6 class="mb-0"><strong>Full Name:</strong> {{ submission.manager2.get_full_name }}</h6>
-                  <small><strong>Position:</strong> {{ submission.manager2.get_position_display }}</small><br>
-                  <small><strong>Email:</strong> {{ submission.manager2.email }}</small><br>
-                  <small><strong>Contact:</strong> {{ submission.manager2.contact|default:"N/A" }}</small>
-                </div>
-              </div>
-              <div>
-                <p><strong>Status:</strong>
-                  {% if submission.manager2_status == "approved" %}
-                    <span class="badge bg-success">Approved</span>
-                  {% elif submission.manager2_status == "rejected" %}
-                    <span class="badge bg-danger">Rejected</span>
-                  {% elif submission.manager2_status == "resubmitted" %}
-                    <span class="badge bg-warning text-dark">Resubmit</span>
-                  {% else %}
-                    <span class="badge bg-secondary">Pending</span>
-                  {% endif %}
-                </p>
-                <p><strong>Comment:</strong><br>{{ submission.manager2_comment|default:"No comment provided." }}</p>
-                <p><strong>Reviewed On:</strong> {{ submission.manager2_reviewed_at|date:"Y-m-d H:i" }}</p>
-              </div>
-            </div>
-          </div>
-          {% endif %}
+          {% endfor %}
 
         </div>
       </div>
     </div>
     {% endif %}
 
-    <!-- VISITS -->
+    <!-- Visits Section -->
     <div class="card mb-4 shadow">
       <div class="card-header pb-0"><h6 class="text-uppercase text-secondary mb-0">Number of Visits Achieved</h6></div>
       <div class="card-body px-0 pt-0 pb-2">
@@ -113,7 +85,7 @@
       </div>
     </div>
 
-    <!-- QUOTATIONS -->
+    <!-- Quotations Section -->
     <div class="card mb-4 shadow">
       <div class="card-header pb-0"><h6 class="text-uppercase text-secondary mb-0">Order Quotations</h6></div>
       <div class="card-body px-0 pt-0 pb-2">
@@ -150,7 +122,7 @@
       </div>
     </div>
 
-    <!-- PAYMENTS -->
+    <!-- Payments Section -->
     <div class="card mb-4 shadow">
       <div class="card-header pb-0"><h6 class="text-uppercase text-secondary mb-0">Payments Collected</h6></div>
       <div class="card-body px-0 pt-0 pb-2">
@@ -187,56 +159,62 @@
       </div>
     </div>
 
-    <!-- BACK BUTTON -->
-    <div class="text-end mt-4">
-      <a href="{% url 'user_submission_list' %}" class="btn btn-outline-secondary">Back to Submissions</a>
+    <!-- Leads Section -->
+    <div class="card mb-4 shadow">
+      <div class="card-header bg-light">
+        <h6 class="text-uppercase text-secondary mb-0">Number of New Leads Added</h6>
+      </div>
+      <div class="card-body table-responsive">
+        <table class="table table-bordered text-center align-middle">
+          <thead class="table-light">
+            <tr>
+              <th>No.</th>
+              <th>Production Line</th>
+              <th>Client / Company Name</th>
+              <th>Contact</th>
+              <th>Designation</th>
+              <th>Location</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for l in leads %}
+            <tr>
+              <td>{{ forloop.counter }}</td>
+              <td>{{ l.production_line }}</td>
+              <td>{{ l.client_name }}</td>
+              <td>{{ l.contact }}</td>
+              <td>{{ l.designation }}</td>
+              <td>
+                {% if l.latitude and l.longitude %}
+                  <a href="https://www.google.com/maps/search/?api=1&query={{ l.latitude }},{{ l.longitude }}" target="_blank">
+                    📍 {{ l.place_name }}<br><small>(View on Map)</small>
+                  </a>
+                {% else %}
+                  Not Available
+                {% endif %}
+              </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="6">No leads added.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
     </div>
 
-    <!-- Dispatch Time (at the bottom) -->
-<!-- Dispatch Time (at the bottom) -->
-<!-- Dispatch Time (at the bottom) -->
-<div class="mt-4">
-  <div class="card shadow">
-    <div class="card-header">
-      <h5 class="mb-0 text-primary">Dispatch Time</h5>
-    </div>
-    <div class="card-body">
+    {% if not submission.dispatch_time %}
+      <!-- Show the link if dispatch_time is not set -->
+      <div class="text-center mt-4">
+        <a href="{% url 'dispatch_time_view' submission.id %}" class="btn btn-primary">Set Dispatch Time</a>
+      </div>
+    {% else %}
+      <!-- If dispatch time is set, show it -->
+      <div class="alert alert-success text-center mt-4">
+        <strong>Dispatch Time Set:</strong> {{ submission.dispatch_time|time:"H:i:s" }}
+      </div>
+    {% endif %}
 
-      {% if submission.dispatch_time %}
-        <p class="mb-0">
-          <strong>Set Dispatch Time (Tanzania Time):</strong>
-          <span class="badge bg-gradient-success ms-2">{{ submission.dispatch_time|time:"H:i:s" }}</span>
-        </p>
-
-      {% else %}
-        <p><em class="text-muted">Dispatch time not set.</em></p>
-
-        {% if tanzania_time %}
-          <p><strong>Current Time in Tanzania:</strong>
-            <span class="badge bg-gradient-info ms-2">{{ tanzania_time|date:"Y-m-d H:i:s" }}</span>
-          </p>
-        {% endif %}
-
-        <form method="post" class="mt-3">
-          {% csrf_token %}
-          <div class="mb-3">
-            <label for="id_dispatch_time" class="form-label text-dark fw-bold">Select Dispatch Time (Tanzania Time)</label>
-            <input type="time"
-                   name="dispatch_time"
-                   class="form-control border border-1 border-primary shadow-sm rounded"
-                   id="id_dispatch_time"
-                   required>
-          </div>
-          <button type="submit" class="btn btn-primary shadow">Set Dispatch Time</button>
-        </form>
-      {% endif %}
-
-    </div>
-  </div>
-</div>
-
-
-
+    
 
   </div>
 </main>

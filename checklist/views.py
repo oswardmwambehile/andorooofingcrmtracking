@@ -30,6 +30,23 @@ def index(request):
 
 
 
+from django.contrib.auth import authenticate, login
+from django.shortcuts import redirect
+from django.contrib import messages
+
+# The POSITION_CHOICES tuple
+POSITION_CHOICES = [
+    ('Head of Sales', 'Head of Sales'),
+    ('Facilitator', 'Facilitator'),
+    ('Product Brand Manager', 'Product Brand Manager'),
+    ('Corporate Manager', 'Corporate Manager'),
+    ('Corporate Officer', 'Corporate Officer'),
+    ('Zonal Sales Executive', 'Zonal Sales Executive'),
+    ('Mobile Sales Officer', 'Mobile Sales Officer'),
+    ('Desk Sales Officer', 'Desk Sales Officer'),
+    ('Admin', 'Admin'),
+]
+
 def login_user(request):
     if request.method == 'POST':
         email = request.POST['email']
@@ -40,18 +57,21 @@ def login_user(request):
 
         if user is not None:
             login(request, user)
-            
 
-            # Redirect based on user_type
-            if user.position == 'MANAGER':
-                return redirect('index')
+            # Check user's position and redirect accordingly
+            if user.position in ['Head of Sales', 'Facilitator', 'Product Brand Manager', 'Zonal Sales Executive']:
+                return redirect('index')  # Redirect to 'index' for these positions
+            elif user.position in ['Corporate Officer', 'Mobile Sales Officer', 'Desk Sales Officer']:
+                return redirect('dashboard')  # Redirect to 'dashboard' for these positions
             else:
-                return redirect('dashboard')
+                return redirect('home')  # Default redirect for all other positions
         else:
             messages.error(request, 'Invalid email or password.')
             return redirect('login')
 
-    return render(request, 'auth/login.html')
+    # Handle GET request: Render the login page/form
+    return render(request, 'auth/login.html')  # Ensure you have a 'login.html' template
+
 
 
 from django.shortcuts import render, redirect
@@ -178,8 +198,8 @@ def submit_all_forms(request):
                         obj.save()
                         print("✅ Lead saved:", obj)
 
-            messages.success(request, "All forms submitted successfully.")
-            return redirect('submit_all_forms')  # <-- Make sure 'dashboard' exists in your urls.py
+            
+            return redirect('user_submission_list')  # <-- Make sure 'dashboard' exists in your urls.py
         else:
             messages.error(request, "There was an error in one or more forms. Please correct and resubmit.")
     else:
@@ -215,19 +235,28 @@ def user_submission_list(request):
 
 
 
-def manager_submissions_list(request):
-    submissions = FormSubmission.objects.all().order_by('-created_at')
+from django.core.paginator import Paginator
+from django.shortcuts import render
+from .models import FormSubmission  # Adjust based on your app structure
 
+def manager_submissions_list(request):
     status = request.GET.get('final_status')
+
     if status:
-        submissions = submissions.filter(final_status=status)
+        # Show all with the selected status
+        submissions = FormSubmission.objects.filter(final_status=status)
+    else:
+        # Default behavior: exclude approved ones
+        submissions = FormSubmission.objects.exclude(final_status='approved')
+
+    submissions = submissions.order_by('-created_at')
 
     paginator = Paginator(submissions, 100)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
     return render(request, 'manager/manager_submitted_forms.html', {
-        'page_obj': page_obj
+        'page_obj': page_obj,
     })
 
 
@@ -252,7 +281,12 @@ import pytz
 from geopy.geocoders import Nominatim
 
 from .models import FormSubmission
-from .forms import DispatchTimeForm
+
+
+from django.shortcuts import render, get_object_or_404
+from .models import FormSubmission
+from django.db.models import Sum
+from geopy.geocoders import Nominatim
 
 def submission_detail(request, submission_id):
     submission = get_object_or_404(FormSubmission, id=submission_id, user=request.user)
@@ -279,18 +313,21 @@ def submission_detail(request, submission_id):
         else:
             lead.place_name = "Location not available"
 
-    # Handle dispatch time form
-    if request.method == 'POST' and not submission.dispatch_time:
-        dispatch_form = DispatchTimeForm(request.POST, instance=submission)
-        if dispatch_form.is_valid():
-            dispatch_form.save()
-            return redirect('submission_detail', submission_id=submission.id)
-    else:
-        dispatch_form = DispatchTimeForm(instance=submission)
-
-    # Add current Tanzania time
-    tz = pytz.timezone("Africa/Dar_es_Salaam")
-    tanzania_time = now().astimezone(tz)
+    # Prepare reviewers' info to pass to the template
+    reviewers_info = []
+    for reviewer, status_field, comment_field, reviewed_at_field in [
+        ('zonal_reviewer', 'zonal_status', 'zonal_comment', 'zonal_reviewed_at'),
+        ('product_manager', 'product_manager_status', 'product_manager_comment', 'product_manager_reviewed_at'),
+        ('facilitator', 'facilitator_status', 'facilitator_comment', 'facilitator_reviewed_at'),
+    ]:
+        reviewer_obj = getattr(submission, reviewer)
+        if reviewer_obj:
+            reviewers_info.append({
+                "reviewer": reviewer_obj,
+                "status": getattr(submission, status_field),
+                "comment": getattr(submission, comment_field),
+                "reviewed_at": getattr(submission, reviewed_at_field),
+            })
 
     return render(request, 'users/submission_detail.html', {
         'submission': submission,
@@ -300,9 +337,42 @@ def submission_detail(request, submission_id):
         'leads': leads,
         'total_payment': total_payment,
         'total_quotation': total_quotation,
-        'dispatch_form': dispatch_form,
-        'tanzania_time': tanzania_time,  # ⬅️ Add to context
+        'reviewers_info': reviewers_info,  # Pass the reviewer details to the template
     })
+
+
+from django.shortcuts import render, get_object_or_404, redirect
+from django.utils import timezone
+from .forms import DispatchTimeForm
+from .models import FormSubmission
+
+# views.py
+from django.shortcuts import get_object_or_404, render, redirect
+from .models import FormSubmission
+from .forms import DispatchTimeForm
+
+def dispatch_time_view(request, submission_id):
+    # Get the FormSubmission object by ID
+    submission = get_object_or_404(FormSubmission, id=submission_id)
+
+    # If the dispatch time is already set, redirect to the submission detail page
+    if submission.dispatch_time:
+        return redirect('submission_detail', submission_id=submission.id)
+
+    # Handle the form submission
+    if request.method == 'POST':
+        form = DispatchTimeForm(request.POST)
+        if form.is_valid():
+            # Update the form submission with the dispatch time
+            submission.dispatch_time = form.cleaned_data['dispatch_time']
+            submission.save()
+            return redirect('submission_detail', submission_id=submission.id)
+    else:
+        # Initialize the form (no need to pass 'instance' as it's not a ModelForm)
+        form = DispatchTimeForm()
+
+    # Pass the form and submission object to the template
+    return render(request, 'users/dispatch_time_form.html', {'form': form, 'form_submission': submission})
 
 
 
@@ -413,22 +483,28 @@ from .forms import ManagerReviewForm
 
 
 
+from django.shortcuts import render, get_object_or_404, redirect
+from django.contrib import messages
+from .models import FormSubmission
+from .forms import ManagerReviewForm  # Your form with 'status' and 'comment'
+
 def manager_review(request, form_id):
     submission = get_object_or_404(FormSubmission, pk=form_id)
 
+    # Prevent duplicate reviews by the same user
     if submission.is_reviewed_by(request.user):
         messages.warning(request, "You have already reviewed this submission.")
-        return redirect('manager_submissions_list')  # Or wherever you want to send them
+        return redirect('manager_submissions_list')
 
     if request.method == 'POST':
         form = ManagerReviewForm(request.POST)
         if form.is_valid():
+            status = form.cleaned_data['status']
+            comment = form.cleaned_data['comment']
             try:
-                status = form.cleaned_data['status']
-                comment = form.cleaned_data['comment']
                 submission.save_review(request.user, status, comment)
-                messages.success(request, 'Your review has been submitted.')
-                return redirect('manager_submissions_list')  # Or wherever you want
+                messages.success(request, "Your review has been submitted.")
+                return redirect('manager_submissions_list')
             except ValueError as ve:
                 messages.error(request, str(ve))
     else:
@@ -438,6 +514,7 @@ def manager_review(request, form_id):
         'form': form,
         'submission': submission,
     })
+
 
 
 

@@ -24,21 +24,41 @@ class CustomUserManager(BaseUserManager):
 
 class CustomUser(AbstractBaseUser, PermissionsMixin):
     POSITION_CHOICES = [
-        ('SALE_OFFICER', 'Sale Officer'),
-        ('MANAGER', 'Manager'),
-        ('OPERATE_OFFICER', 'Operate Officer'),
+        ('Head of Sales', 'Head of Sales'),
+        ('Facilitator', 'Facilitator'),
+        ('Product Brand Manager', 'Product Brand Manager'),
+        ('Corporate Manager', 'Corporate Manager'),
+        ('Corporate Officer', 'Corporate Officer'),
+        ('Zonal Sales Executive', 'Zonal Sales Executive'),
+        ('Mobile Sales Officer', 'Mobile Sales Officer'),
+        ('Desk Sales Officer', 'Desk Sales Officer'),
+        ('Admin', 'Admin'),
     ]
 
     ZONE_CHOICES = [
-        ('CENTRAL', 'Central Zone'),
-        ('LAKE', 'Lake Zone'),
+        ('Coast Zone', 'Coast Zone'),
+        ('Corporate', 'Corporate'),
+        ('Central Zone', 'Central Zone'),
+        ('Southern Zone', 'Southern Zone'),
+        ('Northern Zone', 'Northern Zone'),
+        ('Lake Zone', 'Lake Zone'),
     ]
 
     BRANCH_CHOICES = [
-        ('CHANIKA', 'Chanika'),
-        ('MWANZA', 'Mwanza'),
-        ('SINGIDA', 'Singida'),
-        ('MIKOCHENI', 'Mikocheni'),
+        ('Chanika', 'Chanika'),
+        ('Mikocheni', 'Mikocheni'),
+        ('Morogoro', 'Morogoro'),
+        ('Zanzibar', 'Zanzibar'),
+        ('ANDO HQ', 'ANDO HQ'),
+        ('Dodoma', 'Dodoma'),
+        ('Singida', 'Singida'),
+        ('Tabora', 'Tabora'),
+        ('Mbeya', 'Mbeya'),
+        ('Tunduma', 'Tunduma'),
+        ('Arusha', 'Arusha'),
+        ('Moshi', 'Moshi'),
+        ('Mwanza', 'Mwanza'),
+        ('Geita', 'Geita'),
     ]
 
     email = models.EmailField(unique=True)
@@ -49,9 +69,9 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     is_staff = models.BooleanField(default=False)
     date_joined = models.DateTimeField(default=timezone.now)
 
-    position = models.CharField(max_length=20, choices=POSITION_CHOICES, null=True, blank=True)
-    zone = models.CharField(max_length=20, choices=ZONE_CHOICES, null=True, blank=True)
-    branch = models.CharField(max_length=20, choices=BRANCH_CHOICES, null=True, blank=True)
+    position = models.CharField(max_length=100, choices=POSITION_CHOICES, null=True, blank=True)
+    zone = models.CharField(max_length=100, choices=ZONE_CHOICES, null=True, blank=True)
+    branch = models.CharField(max_length=100, choices=BRANCH_CHOICES, null=True, blank=True)
     contact = models.CharField(max_length=100, null=True, blank=True)
 
     objects = CustomUserManager()
@@ -67,6 +87,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
 
     def get_short_name(self):
         return self.first_name
+
 
 
 
@@ -111,82 +132,161 @@ STATUS_CHOICES = [
     ('resubmite', 'Resubmit'),
 ]
 
+from django.conf import settings
+from django.db import models
+from django.utils.timezone import now
+
+from django.conf import settings
+from django.db import models
+from django.utils.timezone import now
+
+STATUS_CHOICES = [
+    ('opened', 'Opened'),
+    ('approved', 'Approved'),
+    ('rejected', 'Rejected'),
+    ('resubmite', 'Resubmite'),
+]
+
 class FormSubmission(models.Model):
+    POSITION_CHOICES = [
+        ('Head of Sales', 'Head of Sales'),
+        ('Facilitator', 'Facilitator'),
+        ('Product Brand Manager', 'Product Brand Manager'),
+        ('Corporate Manager', 'Corporate Manager'),
+        ('Corporate Officer', 'Corporate Officer'),
+        ('Zonal Sales Executive', 'Zonal Sales Executive'),
+        ('Mobile Sales Officer', 'Mobile Sales Officer'),
+        ('Desk Sales Officer', 'Desk Sales Officer'),
+        ('Admin', 'Admin'),
+    ]
+
+    # Define constants to avoid hardcoding strings
+    POSITION_ZONAL = 'Zonal Sales Executive'
+    POSITION_PRODUCT_MANAGER = 'Product Brand Manager'
+    POSITION_FACILITATOR = 'Facilitator'
+    POSITION_CORPORATE_OFFICER = 'Corporate Officer'
+    POSITION_MOBILE_SALES_OFFICER = 'Mobile Sales Officer'
+    POSITION_DESK_SALES_OFFICER = 'Desk Sales Officer'
+
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name='submissions'
     )
 
-    # Final status saved after both managers review
     final_status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='opened')
 
-    # Manager 1 review
-    manager1 = models.ForeignKey(
+    # Reviewers and their statuses/comments/timestamps
+    zonal_reviewer = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         null=True,
         blank=True,
         on_delete=models.SET_NULL,
-        related_name='first_reviews'
+        related_name='zonal_reviews'
     )
-    manager1_status = models.CharField(max_length=10, choices=STATUS_CHOICES, null=True, blank=True)
-    manager1_comment = models.TextField(null=True, blank=True)
-    manager1_reviewed_at = models.DateTimeField(null=True, blank=True)
+    zonal_status = models.CharField(max_length=10, choices=STATUS_CHOICES, null=True, blank=True)
+    zonal_comment = models.TextField(null=True, blank=True)
+    zonal_reviewed_at = models.DateTimeField(null=True, blank=True)
 
-    # Manager 2 review
-    manager2 = models.ForeignKey(
+    product_manager = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         null=True,
         blank=True,
         on_delete=models.SET_NULL,
-        related_name='second_reviews'
+        related_name='product_manager_reviews'
     )
-    manager2_status = models.CharField(max_length=10, choices=STATUS_CHOICES, null=True, blank=True)
-    manager2_comment = models.TextField(null=True, blank=True)
-    manager2_reviewed_at = models.DateTimeField(null=True, blank=True)
+    product_manager_status = models.CharField(max_length=10, choices=STATUS_CHOICES, null=True, blank=True)
+    product_manager_comment = models.TextField(null=True, blank=True)
+    product_manager_reviewed_at = models.DateTimeField(null=True, blank=True)
+
+    facilitator = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name='facilitator_reviews'
+    )
+    facilitator_status = models.CharField(max_length=10, choices=STATUS_CHOICES, null=True, blank=True)
+    facilitator_comment = models.TextField(null=True, blank=True)
+    facilitator_reviewed_at = models.DateTimeField(null=True, blank=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
+    dispatch_time = models.TimeField(null=True, blank=True)
 
-    
     def save(self, *args, **kwargs):
-        # Ensure new forms always start with "opened"
         if not self.pk:
             self.final_status = 'opened'
         super().save(*args, **kwargs)
 
-    def is_reviewed_by(self, user):
-        """Check if the given user has already submitted a review."""
-        return user == self.manager1 or user == self.manager2
+    def zonal_reviewed(self):
+        return self.zonal_status is not None
 
-    def is_fully_reviewed(self):
-        """True if both managers have reviewed."""
-        return self.manager1 and self.manager2
+    def can_review(self, user):
+        # Allow Zonal Sales Executive to review anytime (first)
+        if user.position == self.POSITION_ZONAL:
+            return True
+
+        # Other two can review only after zonal review is done
+        if user.position in [self.POSITION_PRODUCT_MANAGER, self.POSITION_FACILITATOR]:
+            return self.zonal_reviewed()
+
+        # You can expand logic for other roles if needed here
+        # For example, allow Corporate Officer, Mobile Sales Officer, Desk Sales Officer etc.
+
+        return False
+
+    def is_reviewed_by(self, user):
+        return user == self.zonal_reviewer or user == self.product_manager or user == self.facilitator
+
+    def all_reviewed(self):
+        # True if all three have reviewed
+        return all([
+            self.zonal_status is not None,
+            self.product_manager_status is not None,
+            self.facilitator_status is not None,
+        ])
 
     def save_review(self, user, status, comment):
-        """Handles logic for saving a manager's review."""
         if self.is_reviewed_by(user):
             raise ValueError("You have already reviewed this form.")
 
-        if self.manager1 is None:
-            self.manager1 = user
-            self.manager1_status = status
-            self.manager1_comment = comment
-            self.manager1_reviewed_at = now()
-        elif self.manager2 is None:
-            self.manager2 = user
-            self.manager2_status = status
-            self.manager2_comment = comment
-            self.manager2_reviewed_at = now()
-            self._finalize_status()
+        if user.position == self.POSITION_ZONAL:
+            self.zonal_reviewer = user
+            self.zonal_status = status
+            self.zonal_comment = comment
+            self.zonal_reviewed_at = now()
+
+        elif user.position == self.POSITION_PRODUCT_MANAGER:
+            if not self.zonal_reviewed():
+                raise ValueError("Zonal Sales Executive must review first.")
+            self.product_manager = user
+            self.product_manager_status = status
+            self.product_manager_comment = comment
+            self.product_manager_reviewed_at = now()
+
+        elif user.position == self.POSITION_FACILITATOR:
+            if not self.zonal_reviewed():
+                raise ValueError("Zonal Sales Executive must review first.")
+            self.facilitator = user
+            self.facilitator_status = status
+            self.facilitator_comment = comment
+            self.facilitator_reviewed_at = now()
+
         else:
-            raise ValueError("Both managers have already submitted their reviews.")
+            raise ValueError("You are not authorized to review this form.")
+
+        # If all have reviewed, finalize final_status
+        if self.all_reviewed():
+            self._finalize_status()
 
         self.save()
 
     def _finalize_status(self):
-        """Determine the final status after both managers review."""
-        statuses = [self.manager1_status, self.manager2_status]
-
+        statuses = [
+            self.zonal_status,
+            self.product_manager_status,
+            self.facilitator_status,
+        ]
         if all(s == 'approved' for s in statuses):
             self.final_status = 'approved'
         elif 'rejected' in statuses:
@@ -194,25 +294,30 @@ class FormSubmission(models.Model):
         elif 'resubmite' in statuses:
             self.final_status = 'resubmite'
         else:
-            self.final_status = 'opened'  # fallback if mixed/undefined
+            self.final_status = 'opened'
 
     def get_review_summary(self):
         return {
-            "manager1": {
-                "user": self.manager1.email if self.manager1 else None,
-                "status": self.manager1_status,
-                "comment": self.manager1_comment,
-                "reviewed_at": self.manager1_reviewed_at,
+            "zonal": {
+                "user": self.zonal_reviewer.email if self.zonal_reviewer else None,
+                "status": self.zonal_status,
+                "comment": self.zonal_comment,
+                "reviewed_at": self.zonal_reviewed_at,
             },
-            "manager2": {
-                "user": self.manager2.email if self.manager2 else None,
-                "status": self.manager2_status,
-                "comment": self.manager2_comment,
-                "reviewed_at": self.manager2_reviewed_at,
+            "product_manager": {
+                "user": self.product_manager.email if self.product_manager else None,
+                "status": self.product_manager_status,
+                "comment": self.product_manager_comment,
+                "reviewed_at": self.product_manager_reviewed_at,
+            },
+            "facilitator": {
+                "user": self.facilitator.email if self.facilitator else None,
+                "status": self.facilitator_status,
+                "comment": self.facilitator_comment,
+                "reviewed_at": self.facilitator_reviewed_at,
             },
             "final_status": self.final_status,
         }
-
 
 
 class VisitsAchieved(models.Model):

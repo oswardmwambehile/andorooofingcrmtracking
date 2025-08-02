@@ -20,6 +20,7 @@ urlpatterns = [
      path('manager/submissions/', views.manager_submissions_list, name='manager_submissions_list'),
       path('manager/submissions/<int:submission_id>/', views.manager_submission_detail, name='manager_submission_detail'),
       path('manager-review/<int:form_id>/', views.manager_review, name='manager_review'),
+       path('set-dispatch-time/<int:submission_id>/', views.dispatch_time_view, name='dispatch_time_view'),
 
 
 ]

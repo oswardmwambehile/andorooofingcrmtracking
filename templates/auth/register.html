@@ -8,9 +8,7 @@
     <span class="mask bg-gradient-dark opacity-6"></span>
     <div class="container">
       <div class="row justify-content-center">
-        <div class="col-lg-5 text-center mx-auto">
-          <h1 class="text-white mb-2 mt-5">Welcome!</h1>
-        </div>
+        
       </div>
     </div>
   </div>
@@ -73,12 +71,12 @@
             <form role="form text-left" method="post" enctype="multipart/form-data">
               {% csrf_token %}
 
-              <!-- Username -->
+              <!-- First Name -->
               <div class="mb-3">
                 <input type="text" name="first_name" class="form-control" placeholder="First Name" required>
               </div>
 
-              <!-- Username -->
+              <!-- Last Name -->
               <div class="mb-3">
                 <input type="text" name="last_name" class="form-control" placeholder="Last Name" required>
               </div>
@@ -98,9 +96,15 @@
               <div class="mb-3">
                 <select name="position" class="form-select" required>
                   <option value="">Select Position</option>
-                  <option value="SALE_OFFICER">Sale Officer</option>
-                  <option value="MANAGER">Manager</option>
-                  <option value="OPERATE_OFFICER">Operate Officer</option>
+                  <option value="Head of Sales">Head of Sales</option>
+                  <option value="Facilitator">Facilitator</option>
+                  <option value="Product Brand Manager">Product Brand Manager</option>
+                  <option value="Corporate Manager">Corporate Manager</option>
+                  <option value="Corporate Officer">Corporate Officer</option>
+                  <option value="Zonal Sales Executive">Zonal Sales Executive</option>
+                  <option value="Mobile Sales Officer">Mobile Sales Officer</option>
+                  <option value="Desk Sales Officer">Desk Sales Officer</option>
+                  
                 </select>
               </div>
 
@@ -108,8 +112,12 @@
               <div class="mb-3">
                 <select name="zone" class="form-select" required>
                   <option value="">Select Zone</option>
-                  <option value="CENTRAL">Central Zone</option>
-                  <option value="LAKE">Lake Zone</option>
+                  <option value="Coast Zone">Coast Zone</option>
+                  <option value="Corporate">Corporate</option>
+                  <option value="Central Zone">Central Zone</option>
+                  <option value="Southern Zone">Southern Zone</option>
+                  <option value="Northern Zone">Northern Zone</option>
+                  <option value="Lake Zone">Lake Zone</option>
                 </select>
               </div>
 
@@ -117,10 +125,20 @@
               <div class="mb-3">
                 <select name="branch" class="form-select" required>
                   <option value="">Select Branch</option>
-                  <option value="CHANIKA">Chanika</option>
-                  <option value="MWANZA">Mwanza</option>
-                  <option value="SINGIDA">Singida</option>
-                  <option value="MIKOCHENI">Mikocheni</option>
+                  <option value="Chanika">Chanika</option>
+                  <option value="Mikocheni">Mikocheni</option>
+                  <option value="Morogoro">Morogoro</option>
+                  <option value="Zanzibar">Zanzibar</option>
+                  <option value="ANDO HQ">ANDO HQ</option>
+                  <option value="Dodoma">Dodoma</option>
+                  <option value="Singida">Singida</option>
+                  <option value="Tabora">Tabora</option>
+                  <option value="Mbeya">Mbeya</option>
+                  <option value="Tunduma">Tunduma</option>
+                  <option value="Arusha">Arusha</option>
+                  <option value="Moshi">Moshi</option>
+                  <option value="Mwanza">Mwanza</option>
+                  <option value="Geita">Geita</option>
                 </select>
               </div>
 
